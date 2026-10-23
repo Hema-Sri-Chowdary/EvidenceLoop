@@ -1,0 +1,14 @@
+{
+  "name": "evidenceloop-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EvidenceLoop - Decoupled Frontend and Backend Workspace",
+  "scripts": {
+    "client": "npm --prefix client run dev",
+    "client:build": "npm --prefix client run build",
+    "client:test": "npm --prefix client test",
+    "client:preview": "npm --prefix client run preview",
+    "server": "npm --prefix server start",
+    "server:dev": "npm --prefix server run dev"
+  }
+}
