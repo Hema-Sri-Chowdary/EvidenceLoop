@@ -5,19 +5,25 @@ import { calculateReadiness, calculateDashboardSummary } from '../utils/readines
 const STORAGE_KEY = 'evidenceloop_local_records';
 const DEMO_MODE_KEY = 'evidenceloop_demo_mode';
 
+// Ensure legacy demo mode flags do not fork frontend data from backend
+try {
+  localStorage.removeItem(DEMO_MODE_KEY);
+} catch {
+  // ignore in non-browser or restricted contexts
+}
+
 // Helper to check if offline/demo storage is enabled
 export function isDemoModeActive() {
-  return localStorage.getItem(DEMO_MODE_KEY) === 'true';
+  return false;
 }
 
 export function setDemoModeActive(active) {
-  if (active) {
-    localStorage.setItem(DEMO_MODE_KEY, 'true');
-    if (!localStorage.getItem(STORAGE_KEY)) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_DEMO_OBLIGATIONS));
+  if (!active) {
+    try {
+      localStorage.removeItem(DEMO_MODE_KEY);
+    } catch {
+      // ignore
     }
-  } else {
-    localStorage.removeItem(DEMO_MODE_KEY);
   }
 }
 
@@ -36,7 +42,11 @@ function getLocalRecords() {
 }
 
 function saveLocalRecords(records) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  } catch (err) {
+    console.warn('Could not save local cache:', err);
+  }
 }
 
 export const obligationService = {
@@ -56,18 +66,16 @@ export const obligationService = {
    * Get all obligations with search, filtering, and sorting
    */
   async getObligations(params = {}) {
-    // If demo mode is forced by user, use local storage engine
-    if (isDemoModeActive()) {
-      return this._getLocalObligations(params);
-    }
-
     try {
       const response = await apiClient.get('/obligations', { params });
+      if (response.data && Array.isArray(response.data.data)) {
+        saveLocalRecords(response.data.data);
+      }
       return response.data;
     } catch (err) {
-      // If server unreachable and user has local storage, fall back with transparent notice
+      // If server unreachable, fall back to cached local records with transparent notice
       if (err.request && !err.response) {
-        console.warn('Backend API unreachable. Falling back to local offline storage.');
+        console.warn('Backend API unreachable. Serving cached records from local storage.');
         return this._getLocalObligations(params, true);
       }
       throw err;
@@ -78,10 +86,6 @@ export const obligationService = {
    * Get single obligation by ID
    */
   async getObligationById(id) {
-    if (isDemoModeActive()) {
-      return this._getLocalObligationById(id);
-    }
-
     try {
       const response = await apiClient.get(`/obligations/${id}`);
       return response.data;
@@ -97,12 +101,12 @@ export const obligationService = {
    * Create new obligation
    */
   async createObligation(data) {
-    if (isDemoModeActive()) {
-      return this._createLocalObligation(data);
-    }
-
     try {
       const response = await apiClient.post('/obligations', data);
+      if (response.data && response.data.data) {
+        const local = getLocalRecords();
+        saveLocalRecords([response.data.data, ...local.filter((r) => r._id !== response.data.data._id)]);
+      }
       return response.data;
     } catch (err) {
       if (err.request && !err.response) {
@@ -116,12 +120,16 @@ export const obligationService = {
    * Update obligation
    */
   async updateObligation(id, data) {
-    if (isDemoModeActive()) {
-      return this._updateLocalObligation(id, data);
-    }
-
     try {
       const response = await apiClient.patch(`/obligations/${id}`, data);
+      if (response.data && response.data.data) {
+        const local = getLocalRecords();
+        const idx = local.findIndex((r) => r._id === id);
+        if (idx !== -1) {
+          local[idx] = response.data.data;
+          saveLocalRecords(local);
+        }
+      }
       return response.data;
     } catch (err) {
       if (err.request && !err.response) {
@@ -135,12 +143,10 @@ export const obligationService = {
    * Delete obligation
    */
   async deleteObligation(id) {
-    if (isDemoModeActive()) {
-      return this._deleteLocalObligation(id);
-    }
-
     try {
       const response = await apiClient.delete(`/obligations/${id}`);
+      const local = getLocalRecords();
+      saveLocalRecords(local.filter((r) => r._id !== id));
       return response.data;
     } catch (err) {
       if (err.request && !err.response) {
@@ -154,12 +160,16 @@ export const obligationService = {
    * Add evidence link to obligation
    */
   async addEvidence(id, evidenceData) {
-    if (isDemoModeActive()) {
-      return this._addLocalEvidence(id, evidenceData);
-    }
-
     try {
       const response = await apiClient.post(`/obligations/${id}/evidence`, evidenceData);
+      if (response.data && response.data.data) {
+        const local = getLocalRecords();
+        const idx = local.findIndex((r) => r._id === id);
+        if (idx !== -1) {
+          local[idx] = response.data.data;
+          saveLocalRecords(local);
+        }
+      }
       return response.data;
     } catch (err) {
       if (err.request && !err.response) {
@@ -173,10 +183,6 @@ export const obligationService = {
    * Get dashboard summary
    */
   async getDashboardSummary() {
-    if (isDemoModeActive()) {
-      return this._getLocalDashboardSummary();
-    }
-
     try {
       const response = await apiClient.get('/dashboard/summary');
       return response.data;
@@ -189,12 +195,32 @@ export const obligationService = {
   },
 
   /**
-   * Reset local dataset to default demo obligations
+   * Reset compliance dataset using backend seed endpoint or offline fallback
    */
-  resetDemoData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_DEMO_OBLIGATIONS));
-    localStorage.setItem(DEMO_MODE_KEY, 'true');
-    return INITIAL_DEMO_OBLIGATIONS;
+  async resetDemoData() {
+    try {
+      const response = await apiClient.post('/obligations/seed');
+      if (response.data && Array.isArray(response.data.data)) {
+        saveLocalRecords(response.data.data);
+      } else {
+        const fresh = await apiClient.get('/obligations');
+        if (fresh.data && Array.isArray(fresh.data.data)) {
+          saveLocalRecords(fresh.data.data);
+        }
+      }
+      return response.data;
+    } catch (err) {
+      if (err.request && !err.response) {
+        saveLocalRecords(INITIAL_DEMO_OBLIGATIONS);
+        return {
+          success: true,
+          message: 'Offline demo obligations restored',
+          count: INITIAL_DEMO_OBLIGATIONS.length,
+          data: INITIAL_DEMO_OBLIGATIONS,
+        };
+      }
+      throw err;
+    }
   },
 
   // ----------------------------------------------------

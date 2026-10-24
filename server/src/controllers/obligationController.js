@@ -1,19 +1,34 @@
 import Obligation from '../models/Obligation.js';
-import { isDbConnected } from '../config/db.js';
+import { isDbConnected, loadFallbackData, saveFallbackData } from '../config/db.js';
 import { enrichObligation, calculateReadiness } from '../services/readinessService.js';
 import { generateSeedObligations } from '../utils/seedData.js';
 
-// Fallback in-memory store if running without active MongoDB daemon
-let memoryStore = generateSeedObligations().map((item, idx) => ({
-  _id: `mem_obl_${idx + 1}`,
-  ...item,
-  evidence: Array.isArray(item.evidence) ? item.evidence.map((ev, eIdx) => ({
-    _id: `mem_ev_${idx + 1}_${eIdx + 1}`,
-    ...ev,
-  })) : [],
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-}));
+// Predictable file-backed fallback store when MongoDB is unavailable
+function initFallbackStore() {
+  const loaded = loadFallbackData();
+  if (loaded && Array.isArray(loaded) && loaded.length > 0) {
+    return loaded;
+  }
+  const defaultSeeds = generateSeedObligations().map((item, idx) => ({
+    _id: `obl_${idx + 1}`,
+    ...item,
+    evidence: Array.isArray(item.evidence) ? item.evidence.map((ev, eIdx) => ({
+      _id: `ev_${idx + 1}_${eIdx + 1}`,
+      ...ev,
+    })) : [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }));
+  saveFallbackData(defaultSeeds);
+  return defaultSeeds;
+}
+
+let fallbackStore = initFallbackStore();
+
+function persistFallbackStore(records) {
+  fallbackStore = records;
+  saveFallbackData(records);
+}
 
 /**
  * GET /api/obligations
@@ -73,8 +88,8 @@ export async function getObligations(req, res, next) {
       });
     }
 
-    // In-memory fallback
-    let records = [...memoryStore].map((item) => enrichObligation(item));
+    // Persistent file-backed fallback
+    let records = [...fallbackStore].map((item) => enrichObligation(item));
 
     if (search) {
       const q = search.toLowerCase().trim();
@@ -144,7 +159,7 @@ export async function getObligationById(req, res, next) {
       return res.json({ success: true, data: enrichObligation(doc) });
     }
 
-    const item = memoryStore.find((o) => String(o._id) === String(id));
+    const item = fallbackStore.find((o) => String(o._id) === String(id));
     if (!item) {
       return res.status(404).json({ success: false, message: `Obligation not found with ID ${id}` });
     }
@@ -182,7 +197,7 @@ export async function createObligation(req, res, next) {
     }
 
     const newRecord = {
-      _id: `mem_obl_${Date.now()}`,
+      _id: `obl_${Date.now()}`,
       title,
       description: description || '',
       category,
@@ -195,7 +210,8 @@ export async function createObligation(req, res, next) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    memoryStore.unshift(newRecord);
+    fallbackStore.unshift(newRecord);
+    persistFallbackStore(fallbackStore);
 
     return res.status(201).json({
       success: true,
@@ -231,21 +247,22 @@ export async function updateObligation(req, res, next) {
       });
     }
 
-    const idx = memoryStore.findIndex((o) => String(o._id) === String(id));
+    const idx = fallbackStore.findIndex((o) => String(o._id) === String(id));
     if (idx === -1) {
       return res.status(404).json({ success: false, message: `Obligation not found with ID ${id}` });
     }
 
-    memoryStore[idx] = {
-      ...memoryStore[idx],
+    fallbackStore[idx] = {
+      ...fallbackStore[idx],
       ...updates,
       updatedAt: new Date().toISOString(),
     };
+    persistFallbackStore(fallbackStore);
 
     return res.json({
       success: true,
       message: 'Obligation updated successfully',
-      data: enrichObligation(memoryStore[idx]),
+      data: enrichObligation(fallbackStore[idx]),
     });
   } catch (error) {
     next(error);
@@ -267,11 +284,12 @@ export async function deleteObligation(req, res, next) {
       return res.json({ success: true, message: 'Obligation deleted successfully' });
     }
 
-    const initialLen = memoryStore.length;
-    memoryStore = memoryStore.filter((o) => String(o._id) !== String(id));
-    if (memoryStore.length === initialLen) {
+    const initialLen = fallbackStore.length;
+    const remaining = fallbackStore.filter((o) => String(o._id) !== String(id));
+    if (remaining.length === initialLen) {
       return res.status(404).json({ success: false, message: `Obligation not found with ID ${id}` });
     }
+    persistFallbackStore(remaining);
 
     return res.json({ success: true, message: 'Obligation deleted successfully' });
   } catch (error) {
@@ -303,24 +321,28 @@ export async function addEvidence(req, res, next) {
       });
     }
 
-    const idx = memoryStore.findIndex((o) => String(o._id) === String(id));
+    const idx = fallbackStore.findIndex((o) => String(o._id) === String(id));
     if (idx === -1) {
       return res.status(404).json({ success: false, message: `Obligation not found with ID ${id}` });
     }
 
     const ev = {
-      _id: `mem_ev_${Date.now()}`,
+      _id: `ev_${Date.now()}`,
       label: label.trim(),
       url: url.trim(),
       addedAt: new Date().toISOString(),
     };
-    memoryStore[idx].evidence.push(ev);
-    memoryStore[idx].updatedAt = new Date().toISOString();
+    if (!Array.isArray(fallbackStore[idx].evidence)) {
+      fallbackStore[idx].evidence = [];
+    }
+    fallbackStore[idx].evidence.push(ev);
+    fallbackStore[idx].updatedAt = new Date().toISOString();
+    persistFallbackStore(fallbackStore);
 
     return res.status(201).json({
       success: true,
       message: 'Evidence attached successfully',
-      data: enrichObligation(memoryStore[idx]),
+      data: enrichObligation(fallbackStore[idx]),
     });
   } catch (error) {
     next(error);
@@ -338,25 +360,34 @@ export async function seedObligations(req, res, next) {
     if (isDbConnected()) {
       await Obligation.deleteMany({});
       const created = await Obligation.insertMany(seedRecords);
+      const enriched = created.map((doc) => enrichObligation(doc));
       return res.json({
         success: true,
         message: `Successfully seeded ${created.length} compliance obligations`,
         count: created.length,
+        data: enriched,
       });
     }
 
-    memoryStore = seedRecords.map((item, idx) => ({
-      _id: `mem_obl_${idx + 1}`,
+    const newSeeds = seedRecords.map((item, idx) => ({
+      _id: `obl_${idx + 1}`,
       ...item,
-      evidence: Array.isArray(item.evidence) ? item.evidence : [],
+      evidence: Array.isArray(item.evidence) ? item.evidence.map((ev, eIdx) => ({
+        _id: `ev_${idx + 1}_${eIdx + 1}`,
+        ...ev,
+      })) : [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }));
 
+    persistFallbackStore(newSeeds);
+    const enriched = newSeeds.map((item) => enrichObligation(item));
+
     return res.json({
       success: true,
-      message: `Successfully seeded ${memoryStore.length} compliance obligations in workspace`,
-      count: memoryStore.length,
+      message: `Successfully seeded ${fallbackStore.length} compliance obligations in workspace`,
+      count: fallbackStore.length,
+      data: enriched,
     });
   } catch (error) {
     next(error);

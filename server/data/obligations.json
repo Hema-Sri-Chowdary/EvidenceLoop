@@ -1,0 +1,121 @@
+[
+  {
+    "_id": "obl_1792843748298",
+    "title": "Annual",
+    "description": "",
+    "category": "Access Management",
+    "owner": "IT",
+    "dueDate": "2026-10-23",
+    "priority": "Medium",
+    "status": "Open",
+    "evidenceRequired": true,
+    "evidence": [
+      {
+        "_id": "ev_1792843798726",
+        "label": "VN",
+        "url": "http://localhost:5173/obligations/obl_1792843748298",
+        "addedAt": "2026-10-24T12:09:58.726Z"
+      }
+    ],
+    "createdAt": "2026-10-24T12:09:08.298Z",
+    "updatedAt": "2026-10-24T12:09:58.726Z"
+  },
+  {
+    "_id": "obl_1",
+    "title": "SOC 2 Annual User Access Review & Privilege Deprovisioning",
+    "description": "Quarterly audit of active user directories, privilege escalation logs, and verification of terminated employee access revocation.",
+    "category": "Access Management",
+    "owner": "Sarah Jenkins (IT SecOps)",
+    "dueDate": "2026-10-20",
+    "priority": "Critical",
+    "status": "In Progress",
+    "evidenceRequired": true,
+    "evidence": [],
+    "createdAt": "2026-10-24T12:08:33.035Z",
+    "updatedAt": "2026-10-24T12:08:33.035Z"
+  },
+  {
+    "_id": "obl_2",
+    "title": "Quarterly Infrastructure Penetration Testing & Remediation",
+    "description": "External third-party penetration test report and verified engineering tickets remediating high/critical vulnerabilities.",
+    "category": "Vulnerability Management",
+    "owner": "Marcus Vance (DevSecOps)",
+    "dueDate": "2026-10-22",
+    "priority": "High",
+    "status": "Completed",
+    "evidenceRequired": true,
+    "evidence": [],
+    "createdAt": "2026-10-24T12:08:33.035Z",
+    "updatedAt": "2026-10-24T12:08:33.035Z"
+  },
+  {
+    "_id": "obl_3",
+    "title": "GDPR / CCPA Data Processing Agreement (DPA) Vendor Audits",
+    "description": "Ensure executed DPAs with Standard Contractual Clauses (SCCs) are on file for all sub-processors handling EU customer data.",
+    "category": "Data Privacy",
+    "owner": "Elena Rostova (Legal & Privacy)",
+    "dueDate": "2026-10-27",
+    "priority": "High",
+    "status": "In Progress",
+    "evidenceRequired": true,
+    "evidence": [
+      {
+        "_id": "ev_3_1",
+        "label": "AWS & Cloudflare Executed DPAs (Drive Folder)",
+        "url": "https://drive.google.com/drive/folders/audit-dpa-records-2026",
+        "addedAt": "2026-10-24T12:08:33.035Z"
+      }
+    ],
+    "createdAt": "2026-10-24T12:08:33.035Z",
+    "updatedAt": "2026-10-24T12:08:33.035Z"
+  },
+  {
+    "_id": "obl_4",
+    "title": "Disaster Recovery & Database Failover Simulation",
+    "description": "Conduct annual read-replica promotion and recovery point objective (RPO) / recovery time objective (RTO) benchmark test.",
+    "category": "Business Continuity",
+    "owner": "David Kim (Platform Ops)",
+    "dueDate": "2026-10-29",
+    "priority": "Medium",
+    "status": "Open",
+    "evidenceRequired": true,
+    "evidence": [],
+    "createdAt": "2026-10-24T12:08:33.035Z",
+    "updatedAt": "2026-10-24T12:08:33.035Z"
+  },
+  {
+    "_id": "obl_5",
+    "title": "Annual Security Awareness & Anti-Phishing Training Completion",
+    "description": "Document 100% staff completion of mandatory security compliance training courses and simulated phishing defense drill.",
+    "category": "Human Resources",
+    "owner": "Rachel Adams (People Ops)",
+    "dueDate": "2026-10-14",
+    "priority": "Medium",
+    "status": "Completed",
+    "evidenceRequired": true,
+    "evidence": [
+      {
+        "_id": "ev_5_1",
+        "label": "LMS 100% Completion Export & Certificate Manifest",
+        "url": "https://compliance-records.internal/exports/2026-training-summary.pdf",
+        "addedAt": "2026-10-24T12:08:33.035Z"
+      }
+    ],
+    "createdAt": "2026-10-24T12:08:33.035Z",
+    "updatedAt": "2026-10-24T12:08:33.035Z"
+  },
+  {
+    "_id": "obl_6",
+    "title": "Internal Ops Policy Bi-Annual Style Guide Review",
+    "description": "Internal documentation housekeeping review. General formatting and wording updates for operations team wiki.",
+    "category": "Operations",
+    "owner": "Tyler Brooks (Operations)",
+    "dueDate": "2026-11-13",
+    "priority": "Low",
+    "status": "In Progress",
+    "evidenceRequired": false,
+    "evidence": [],
+    "createdAt": "2026-10-24T12:08:33.035Z",
+    "updatedAt": "2026-10-24T12:08:33.035Z"
+  }
+]
