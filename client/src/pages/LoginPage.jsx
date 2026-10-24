@@ -133,15 +133,31 @@ export function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8FAFC', padding: 20 }}>
-      <div style={{ maxWidth: 480, width: '100%', backgroundColor: '#FFFFFF', borderRadius: 12, border: '1px solid var(--border)', boxShadow: '0 8px 30px rgba(0,0,0,0.06)', padding: 36 }}>
-        
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #ECFDF5 0%, #E6F4F1 50%, #D8EFEA 100%)',
+        backgroundColor: '#E6F4F1',
+        padding: 20,
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 480,
+          width: '100%',
+          backgroundColor: '#FFFFFF',
+          borderRadius: 16,
+          border: '1px solid #CCFBF1',
+          boxShadow: '0 20px 40px -12px rgba(15, 118, 110, 0.15)',
+          padding: 36,
+        }}
+      >
         {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 56, height: 56, borderRadius: 14, backgroundColor: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', marginBottom: 16 }}>
-            <Shield size={32} />
-          </div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
             EvidenceLoop
           </h1>
           <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0 }}>

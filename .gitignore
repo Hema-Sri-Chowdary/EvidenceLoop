@@ -10,18 +10,15 @@ client/dist/
 
 # Environment and secrets - NEVER COMMIT SECRETS
 .env
-.env*
-.env.example
-.envexample
-*.env.example
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
 client/.env
-client/.env*
+client/.env.local
 server/.env
-server/.env*
+server/.env.local
+!.env.example
+!client/.env.example
+!server/.env.example
 
 # Logs
 npm-debug.log*

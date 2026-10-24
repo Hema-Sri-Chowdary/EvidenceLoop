@@ -3,7 +3,8 @@
  * Zero external HTTP library dependencies (replaces Axios with standard Fetch API).
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const RAW_API_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = RAW_API_URL.replace(/\/+$/, '');
 
 async function request(endpoint, options = {}) {
   const { params, body, timeout = 10000, ...customConfig } = options;
