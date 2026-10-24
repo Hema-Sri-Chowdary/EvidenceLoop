@@ -60,8 +60,8 @@ export function ProfilePage() {
           bg: '#EFF6FF',
           border: '#BFDBFE',
           color: '#1D4ED8',
-          tag: 'VIT-AP Institutional Auditor',
-          desc: 'Assigned via @vitap institutional email. Full authority to create, edit, evaluate obligations, and attach compliance evidence.',
+          tag: 'Compliance & Institutional Auditor',
+          desc: 'Assigned via @vit and @vcomply domains. Full authority to create, edit, evaluate obligations, and attach compliance evidence.',
         };
       default:
         return {

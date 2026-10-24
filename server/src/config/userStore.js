@@ -12,16 +12,21 @@ const USERS_FILE = path.join(DATA_DIR, 'users.json');
 /**
  * Enforce role assignment rules:
  * - 'hemasrichowdary@gmail.com' is ALWAYS Admin
- * - Anyone with '@vitap' in their email is ALWAYS Auditor
+ * - Anyone with '@vit' or '@vcomply' in their email domain is ALWAYS Auditor
  * - Remaining accounts are Viewers
  */
 export function determineRoleByEmail(email) {
   if (!email || typeof email !== 'string') return 'Viewer';
   const clean = email.trim().toLowerCase();
-  if (clean === 'hemasrichowdary@gmail.com') {
+  if (clean === 'hemasrichowdary@gmail.com' || clean === 'hemasrichowdarykilaru@gmail.com') {
     return 'Admin';
   }
-  if (clean.includes('@vitap') || clean.includes('.vitap.')) {
+  if (
+    clean.includes('@vit') ||
+    clean.includes('.vit.') ||
+    clean.includes('@vcomply') ||
+    clean.includes('.vcomply.')
+  ) {
     return 'Auditor';
   }
   return 'Viewer';
@@ -35,54 +40,20 @@ export function determineOrgByEmail(email, customOrg) {
     return customOrg.trim();
   }
   const clean = (email || '').trim().toLowerCase();
-  if (clean === 'hemasrichowdary@gmail.com') {
+  if (clean === 'hemasrichowdary@gmail.com' || clean === 'hemasrichowdarykilaru@gmail.com') {
     return 'VIT-AP University / EvidenceLoop Principal';
   }
-  if (clean.includes('@vitap') || clean.includes('.vitap.')) {
-    return 'VIT-AP University';
+  if (clean.includes('@vcomply') || clean.includes('.vcomply.')) {
+    return 'VComply';
+  }
+  if (clean.includes('@vit') || clean.includes('.vit.')) {
+    return 'VIT University';
   }
   return 'Compliance Observer Organization';
 }
 
-// Initial seed users with their default credentials and role enforcement
-export const DEFAULT_USERS = [
-  {
-    _id: 'usr_admin_hema',
-    name: 'Hema Sri Chowdary',
-    email: 'hemasrichowdary@gmail.com',
-    passwordRaw: 'AdminPassword123!',
-    role: 'Admin',
-    org: 'VIT-AP University / EvidenceLoop Principal',
-    mfaEnabled: true,
-  },
-  {
-    _id: 'usr_auditor_vitap',
-    name: 'Lead Internal Auditor (VIT-AP)',
-    email: 'auditor@vitap.ac.in',
-    passwordRaw: 'AuditorPassword123!',
-    role: 'Auditor',
-    org: 'VIT-AP University',
-    mfaEnabled: true,
-  },
-  {
-    _id: 'usr_viewer_003',
-    name: 'Elena Rostova (Compliance Observer)',
-    email: 'viewer@evidenceloop.com',
-    passwordRaw: 'ViewerPassword123!',
-    role: 'Viewer',
-    org: 'Global Compliance Institute',
-    mfaEnabled: true,
-  },
-  {
-    _id: 'usr_admin_legacy',
-    name: 'Sarah Jenkins (Chief Compliance Officer)',
-    email: 'admin@evidenceloop.com',
-    passwordRaw: 'AdminPassword123!',
-    role: 'Admin',
-    org: 'EvidenceLoop Enterprise Audit',
-    mfaEnabled: true,
-  },
-];
+// Registered accounts list (cleared so user can register fresh accounts)
+export const DEFAULT_USERS = [];
 
 let fallbackUsers = [];
 
@@ -113,79 +84,27 @@ function saveUsersFile(users) {
   }
 }
 
+let isStoreInitialized = false;
+
 export async function initUserStore() {
+  if (isStoreInitialized) return;
+  isStoreInitialized = true;
+
   const loaded = loadUsersFile();
-  if (loaded && loaded.length > 0) {
+  if (Array.isArray(loaded)) {
     fallbackUsers = loaded;
-
-    // Ensure default seeded accounts (like hemasrichowdary@gmail.com) exist in fallback
-    let needsSave = false;
-    for (const def of DEFAULT_USERS) {
-      const exists = fallbackUsers.find((u) => u.email === def.email.toLowerCase());
-      if (!exists) {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(def.passwordRaw, salt);
-        fallbackUsers.push({
-          _id: def._id,
-          name: def.name,
-          email: def.email.toLowerCase(),
-          password: hashedPassword,
-          role: def.role,
-          org: def.org,
-          mfaEnabled: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
-        needsSave = true;
-      }
-    }
-
-    // Enforce email-to-role policy on existing users
-    for (const u of fallbackUsers) {
-      const properRole = determineRoleByEmail(u.email);
-      if (u.email === 'admin@evidenceloop.com') {
-        // preserve legacy admin
-      } else if (u.role !== properRole) {
-        u.role = properRole;
-        needsSave = true;
-      }
-      if (!u.org) {
-        u.org = determineOrgByEmail(u.email);
-        needsSave = true;
-      }
-    }
-
-    if (needsSave) {
-      saveUsersFile(fallbackUsers);
-    }
     return;
   }
 
-  // Generate initial hashed seed users
-  fallbackUsers = await Promise.all(
-    DEFAULT_USERS.map(async (u) => {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(u.passwordRaw, salt);
-      return {
-        _id: u._id,
-        name: u.name,
-        email: u.email.toLowerCase(),
-        password: hashedPassword,
-        role: u.role,
-        org: u.org || determineOrgByEmail(u.email),
-        mfaEnabled: u.mfaEnabled,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-    })
-  );
-
+  // If no file exists, initialize empty list
+  fallbackUsers = [];
   saveUsersFile(fallbackUsers);
 }
 
 // Seed MongoDB if connected and empty
 export async function seedMongoUsersIfEmpty() {
   if (!isDbConnected()) return;
+  if (!Array.isArray(DEFAULT_USERS) || DEFAULT_USERS.length === 0) return;
   try {
     for (const u of DEFAULT_USERS) {
       const cleanEmail = u.email.toLowerCase();
@@ -199,20 +118,13 @@ export async function seedMongoUsersIfEmpty() {
           org: u.org || determineOrgByEmail(cleanEmail),
           mfaEnabled: u.mfaEnabled,
         });
-      } else {
-        // Enforce role rule
-        const properRole = determineRoleByEmail(cleanEmail);
-        if (cleanEmail !== 'admin@evidenceloop.com' && existing.role !== properRole) {
-          existing.role = properRole;
-          await existing.save();
-        }
       }
     }
-    console.log('[Database] Verified compliance users in MongoDB.');
   } catch (err) {
     console.warn('[Database] User seeding check skipped:', err.message);
   }
 }
+
 
 export async function findUserByEmail(email) {
   const cleanEmail = email.trim().toLowerCase();

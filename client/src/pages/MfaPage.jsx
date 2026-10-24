@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Key, ArrowRight, ShieldCheck, RefreshCw } from '../components/Icons.jsx';
+import { OtpCirclesInput } from '../components/OtpCirclesInput.jsx';
 
 export function MfaPage() {
   const navigate = useNavigate();
@@ -52,9 +53,9 @@ export function MfaPage() {
   };
 
   const handleVerify = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!otpInput || otpInput.trim().length !== 6) {
-      toast.warning('Please enter a valid 6-digit OTP verification code.');
+      toast.warning('Please enter all 6 digits of your verification code.');
       return;
     }
     setIsSubmitting(true);
@@ -79,7 +80,8 @@ export function MfaPage() {
         setPreviewOtp(res.previewOtp);
       }
       setCountdown(600);
-      toast.info('A new verification code has been dispatched in real time.');
+      setOtpInput('');
+      toast.info('A new verification code has been dispatched to your email.');
     } catch (err) {
       toast.error(err.userMessage || err.message || 'Failed to resend code');
     } finally {
@@ -88,78 +90,68 @@ export function MfaPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #ECFDF5 0%, #E6F4F1 50%, #D8EFEA 100%)',
-        backgroundColor: '#E6F4F1',
-        padding: 20,
-      }}
-    >
+    <div className="auth-page-container">
+      {/* Decorative ambient blur spheres */}
       <div
         style={{
-          maxWidth: 460,
-          width: '100%',
-          backgroundColor: '#FFFFFF',
-          borderRadius: 16,
-          border: '1px solid #CCFBF1',
-          boxShadow: '0 20px 40px -12px rgba(15, 118, 110, 0.15)',
-          padding: 36,
+          position: 'absolute',
+          width: 320,
+          height: 320,
+          borderRadius: '50%',
+          background: 'rgba(16, 185, 129, 0.12)',
+          filter: 'blur(70px)',
+          top: '5%',
+          left: '10%',
+          pointerEvents: 'none',
         }}
-      >
-        {/* Brand Header */}
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
-            EvidenceLoop
-          </h1>
-          <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: 0 }}>
-            Internal Audit Readiness & Compliance Workspace
-          </p>
-        </div>
+      />
+      <div
+        style={{
+          position: 'absolute',
+          width: 380,
+          height: 380,
+          borderRadius: '50%',
+          background: 'rgba(13, 148, 136, 0.14)',
+          filter: 'blur(80px)',
+          bottom: '5%',
+          right: '10%',
+          pointerEvents: 'none',
+        }}
+      />
 
-        {/* Step Indicator */}
-        <div style={{ textAlign: 'center', marginBottom: 22 }}>
+      <div className="auth-card">
+        {/* Brand Header */}
+        <div style={{ textAlign: 'center', marginBottom: 26 }}>
           <div
+            className="auth-badge-pill"
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '5px 14px',
-              borderRadius: 20,
               backgroundColor: '#ECFDF5',
               color: '#0F766E',
-              fontSize: 12.5,
-              fontWeight: 600,
               border: '1px solid #A7F3D0',
-              marginBottom: 12,
+              boxShadow: '0 1px 3px rgba(16, 185, 129, 0.1)',
             }}
           >
-            <Key size={14} />
+            <ShieldCheck size={14} />
             <span>Step 2: Real-Time Multi-Factor Authentication</span>
           </div>
 
-          <h2 style={{ fontSize: 19, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 8px 0' }}>
-            Enter Verification Code
-          </h2>
-          <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
-            A 6-digit real-time security OTP has been dispatched to:
+          <h1 className="auth-brand-title">Two-Step Verification</h1>
+          <p className="auth-brand-subtitle" style={{ marginTop: 4 }}>
+            Enter the 6-digit security code dispatched to:
             <br />
-            <strong style={{ color: 'var(--text-primary)' }}>{email}</strong>
+            <strong style={{ color: '#0F172A', fontWeight: 700 }}>{email}</strong>
           </p>
         </div>
 
-        {/* Real-Time Test Helper Preview Banner */}
+        {/* Live Test Helper Preview Banner if available */}
         {previewOtp && (
           <div
             style={{
-              marginBottom: 22,
+              marginBottom: 20,
               padding: '12px 16px',
-              borderRadius: 10,
+              borderRadius: 'var(--radius-lg)',
               backgroundColor: '#F0FDF4',
-              border: '1px solid #BBF7D0',
+              border: '1.5px solid #BBF7D0',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -167,10 +159,10 @@ export function MfaPage() {
             }}
           >
             <div>
-              <div style={{ fontSize: 11.5, fontWeight: 600, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                Real-Time MFA Security Code
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Real-Time Security Code
               </div>
-              <div style={{ fontSize: 20, fontWeight: 700, fontFamily: 'monospace', color: '#15803D', letterSpacing: 3 }}>
+              <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'monospace', color: '#15803D', letterSpacing: 3 }}>
                 {previewOtp}
               </div>
             </div>
@@ -178,56 +170,61 @@ export function MfaPage() {
               type="button"
               onClick={() => setOtpInput(previewOtp)}
               className="btn btn-secondary btn-sm"
-              style={{ fontSize: 12, padding: '5px 12px', fontWeight: 600 }}
+              style={{
+                borderRadius: 'var(--radius-pill)',
+                fontSize: 12,
+                padding: '6px 14px',
+                fontWeight: 700,
+                color: '#0F766E',
+                border: '1px solid #A7F3D0',
+                backgroundColor: '#FFFFFF',
+              }}
             >
-              Auto-fill OTP
+              Auto-fill Code
             </button>
           </div>
         )}
 
         {/* Verification Form */}
         <form onSubmit={handleVerify}>
-          <div className="form-group" style={{ marginBottom: 20 }}>
-            <label className="form-label" style={{ textAlign: 'center', display: 'block', marginBottom: 10, fontSize: 13 }}>
-              Enter 6-Digit One-Time Password
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="000000"
-              value={otpInput}
-              onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
-              autoFocus
+          <div style={{ textAlign: 'center', marginBottom: 8 }}>
+            <label
+              className="form-label"
               style={{
-                fontSize: 28,
+                fontSize: 10.5,
                 fontWeight: 700,
-                letterSpacing: 8,
-                textAlign: 'center',
-                padding: '12px 16px',
-                width: '100%',
-                borderRadius: 10,
-                border: '2px solid #CCFBF1',
-                boxSizing: 'border-box',
-                fontFamily: 'monospace',
-                outline: 'none',
+                color: '#1E293B',
+                display: 'block',
+                marginBottom: 4,
               }}
-              required
-            />
+            >
+              Enter 6-Digit Code (1 Digit Per Circle)
+            </label>
           </div>
+
+          {/* 6 Round Circular Inputs Component */}
+          <OtpCirclesInput
+            length={6}
+            value={otpInput}
+            onChange={setOtpInput}
+            disabled={isSubmitting}
+            autoFocus={true}
+          />
 
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              fontSize: 13,
-              color: 'var(--text-secondary)',
+              fontSize: 10.5,
+              color: '#64748B',
               marginBottom: 24,
+              padding: '0 4px',
+              fontFamily: 'var(--font-display)',
             }}
           >
             <span>
-              Expires in: <strong style={{ color: countdown < 60 ? '#DC2626' : 'var(--text-primary)' }}>{formatTimer(countdown)}</strong>
+              Expires in: <strong style={{ color: countdown < 60 ? '#DC2626' : '#0F172A', fontWeight: 700 }}>{formatTimer(countdown)}</strong>
             </span>
             <button
               type="button"
@@ -237,42 +234,41 @@ export function MfaPage() {
                 background: 'none',
                 border: 'none',
                 color: '#0F766E',
-                cursor: 'pointer',
-                fontWeight: 600,
-                padding: 0,
-                fontSize: 13,
+                cursor: isResending ? 'not-allowed' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                fontWeight: 700,
+                fontSize: 10.5,
               }}
             >
-              {isResending ? 'Sending...' : 'Resend Code'}
+              <RefreshCw size={13} className={isResending ? 'animate-spin-svg' : ''} />
+              {isResending ? 'Sending...' : 'Resend code'}
             </button>
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting || otpInput.length !== 6}
-            className="btn btn-primary"
-            style={{
-              width: '100%',
-              justifyContent: 'center',
-              padding: '12px 16px',
-              fontSize: 15,
-              fontWeight: 600,
-            }}
+            className="auth-btn-pill"
           >
-            {isSubmitting ? 'Verifying Code...' : 'Verify & Enter Workspace'}
-            <ArrowRight size={16} />
+            {isSubmitting ? 'Verifying...' : 'Verify Code & Enter Workspace'}
+            <ArrowRight size={17} />
           </button>
 
-          <div style={{ textAlign: 'center', marginTop: 18 }}>
+          <div style={{ textAlign: 'center', marginTop: 20 }}>
             <Link
               to="/login"
               style={{
-                color: 'var(--text-secondary)',
-                fontSize: 13.5,
+                color: '#64748B',
+                fontSize: 10.5,
+                fontWeight: 600,
                 textDecoration: 'none',
+                fontFamily: 'var(--font-display)',
+                transition: 'color 0.15s ease',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#0F172A')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#64748B')}
             >
               &larr; Return to Sign In
             </Link>

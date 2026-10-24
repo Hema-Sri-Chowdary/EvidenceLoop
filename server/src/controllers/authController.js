@@ -177,7 +177,7 @@ export async function resendOtp(req, res, next) {
  * POST /api/auth/register
  * Automatic role assignment:
  * - hemasrichowdary@gmail.com -> Admin
- * - @vitap emails -> Auditor
+ * - @vit and @vcomply domain emails -> Auditor
  * - Others -> Viewer
  */
 export async function register(req, res, next) {

@@ -23,13 +23,14 @@ export function LoginPage() {
   // Determine dynamic role based on input email
   const getDynamicRole = (email) => {
     const clean = (email || '').trim().toLowerCase();
-    if (clean === 'hemasrichowdary@gmail.com') {
-      return { role: 'Admin', color: '#7E22CE', bg: '#FAF5FF', border: '#D8B4FE', label: 'Admin (EvidenceLoop Principal)' };
+    if (clean === 'hemasrichowdary@gmail.com' || clean === 'hemasrichowdarykilaru@gmail.com') {
+      return { role: 'Admin', color: '#6B21A8', bg: '#FAF5FF', border: '#D8B4FE', label: 'Admin (EvidenceLoop Principal)' };
     }
-    if (clean.includes('@vitap') || clean.includes('.vitap.')) {
-      return { role: 'Auditor', color: '#1D4ED8', bg: '#EFF6FF', border: '#BFDBFE', label: 'Auditor (VIT-AP Institutional Auditor)' };
+    if (clean.includes('@vit') || clean.includes('.vit.') || clean.includes('@vcomply') || clean.includes('.vcomply.')) {
+      const orgTag = clean.includes('vcomply') ? 'VComply Auditor' : 'VIT Institutional Auditor';
+      return { role: 'Auditor', color: '#1E40AF', bg: '#EFF6FF', border: '#BFDBFE', label: `Auditor (${orgTag})` };
     }
-    return { role: 'Viewer', color: '#475569', bg: '#F8FAFC', border: '#CBD5E1', label: 'Viewer (Compliance Observer)' };
+    return { role: 'Viewer', color: '#334155', bg: '#F8FAFC', border: '#CBD5E1', label: 'Viewer (Compliance Observer)' };
   };
 
   const dynamicRole = getDynamicRole(formData.email);
@@ -49,7 +50,6 @@ export function LoginPage() {
       if (isRegister) {
         const res = await register(formData);
         toast.success(res.message, 'Account Registered');
-        // Direct to MFA Page
         navigate('/mfa', {
           state: {
             otpSessionToken: res.otpSessionToken,
@@ -63,7 +63,6 @@ export function LoginPage() {
       } else {
         const res = await login(formData.email, formData.password);
         toast.info(res.message, 'Real-Time MFA Dispatched');
-        // Direct to MFA Page
         navigate('/mfa', {
           state: {
             otpSessionToken: res.otpSessionToken,
@@ -83,73 +82,70 @@ export function LoginPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #ECFDF5 0%, #E6F4F1 50%, #D8EFEA 100%)',
-        backgroundColor: '#E6F4F1',
-        padding: 20,
-      }}
-    >
+    <div className="auth-page-container">
+      {/* Decorative ambient blur spheres */}
       <div
         style={{
-          maxWidth: 460,
-          width: '100%',
-          backgroundColor: '#FFFFFF',
-          borderRadius: 16,
-          border: '1px solid #CCFBF1',
-          boxShadow: '0 20px 40px -12px rgba(15, 118, 110, 0.15)',
-          padding: 36,
+          position: 'absolute',
+          width: 320,
+          height: 320,
+          borderRadius: '50%',
+          background: 'rgba(16, 185, 129, 0.12)',
+          filter: 'blur(70px)',
+          top: '5%',
+          left: '10%',
+          pointerEvents: 'none',
         }}
-      >
+      />
+      <div
+        style={{
+          position: 'absolute',
+          width: 380,
+          height: 380,
+          borderRadius: '50%',
+          background: 'rgba(13, 148, 136, 0.14)',
+          filter: 'blur(80px)',
+          bottom: '5%',
+          right: '10%',
+          pointerEvents: 'none',
+        }}
+      />
+
+      <div className="auth-card">
         {/* Brand Header */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
-            EvidenceLoop
-          </h1>
-          <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: 0 }}>
+          <div
+            className="auth-badge-pill"
+            style={{
+              backgroundColor: '#ECFDF5',
+              color: '#0F766E',
+              border: '1px solid #A7F3D0',
+              boxShadow: '0 1px 3px rgba(16, 185, 129, 0.1)',
+            }}
+          >
+            <Shield size={14} />
+            <span>Audit & Compliance Portal</span>
+          </div>
+
+          <h1 className="auth-brand-title">EvidenceLoop</h1>
+          <p className="auth-brand-subtitle">
             Internal Audit Readiness & Compliance Workspace
           </p>
         </div>
 
-        {/* Tabs: Sign In / Create Account */}
-        <div style={{ display: 'flex', borderRadius: 8, backgroundColor: '#F1F5F9', padding: 4, marginBottom: 24 }}>
+        {/* Tabs: Sign In / Create Account with Rounded Pill Switcher */}
+        <div className="auth-tabs-pill">
           <button
             type="button"
             onClick={() => setIsRegister(false)}
-            style={{
-              flex: 1,
-              padding: '8px 12px',
-              borderRadius: 6,
-              border: 'none',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-              backgroundColor: !isRegister ? '#FFFFFF' : 'transparent',
-              color: !isRegister ? 'var(--text-primary)' : 'var(--text-secondary)',
-              boxShadow: !isRegister ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-            }}
+            className={`auth-tab-btn ${!isRegister ? 'active' : ''}`}
           >
             Sign In
           </button>
           <button
             type="button"
             onClick={() => setIsRegister(true)}
-            style={{
-              flex: 1,
-              padding: '8px 12px',
-              borderRadius: 6,
-              border: 'none',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-              backgroundColor: isRegister ? '#FFFFFF' : 'transparent',
-              color: isRegister ? 'var(--text-primary)' : 'var(--text-secondary)',
-              boxShadow: isRegister ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-            }}
+            className={`auth-tab-btn ${isRegister ? 'active' : ''}`}
           >
             Create Account
           </button>
@@ -157,8 +153,10 @@ export function LoginPage() {
 
         <form onSubmit={handleLoginSubmit}>
           {isRegister && (
-            <div className="form-group" style={{ marginBottom: 16 }}>
-              <label className="form-label">Full Name</label>
+            <div className="form-group" style={{ marginBottom: 18 }}>
+              <label className="form-label" style={{ fontSize: 13.5, fontWeight: 700, color: '#1E293B', marginBottom: 6 }}>
+                Full Name
+              </label>
               <input
                 type="text"
                 className="form-control"
@@ -170,8 +168,10 @@ export function LoginPage() {
             </div>
           )}
 
-          <div className="form-group" style={{ marginBottom: 14 }}>
-            <label className="form-label">Email Address</label>
+          <div className="form-group" style={{ marginBottom: 18 }}>
+            <label className="form-label" style={{ fontSize: 11, fontWeight: 700, color: '#1E293B', marginBottom: 6 }}>
+              Email Address
+            </label>
             <input
               type="email"
               className="form-control"
@@ -189,24 +189,28 @@ export function LoginPage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                padding: '8px 12px',
-                borderRadius: 8,
+                padding: '10px 14px',
+                borderRadius: 'var(--radius-pill)',
                 backgroundColor: dynamicRole.bg,
-                border: `1px solid ${dynamicRole.border}`,
+                border: `1.5px solid ${dynamicRole.border}`,
                 color: dynamicRole.color,
-                fontSize: 12.5,
-                fontWeight: 600,
-                marginBottom: 16,
+                fontSize: 10.5,
+                fontWeight: 700,
+                fontFamily: 'var(--font-display)',
+                marginBottom: 18,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
               }}
             >
-              <Shield size={14} />
+              <Shield size={15} />
               <span>Assigned: {dynamicRole.label}</span>
             </div>
           )}
 
           {isRegister && (
-            <div className="form-group" style={{ marginBottom: 16 }}>
-              <label className="form-label">Organization / Affiliation</label>
+            <div className="form-group" style={{ marginBottom: 18 }}>
+              <label className="form-label" style={{ fontSize: 11, fontWeight: 700, color: '#1E293B', marginBottom: 6 }}>
+                Organization / Affiliation
+              </label>
               <input
                 type="text"
                 className="form-control"
@@ -217,20 +221,24 @@ export function LoginPage() {
             </div>
           )}
 
-          <div className="form-group" style={{ marginBottom: 18 }}>
+          <div className="form-group" style={{ marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-              <label className="form-label" style={{ margin: 0 }}>Password</label>
+              <label className="form-label" style={{ fontSize: 11, fontWeight: 700, color: '#1E293B', margin: 0 }}>
+                Password
+              </label>
               {!isRegister && (
                 <Link
                   to="/forgot-password"
                   style={{
-                    fontSize: 12.5,
+                    fontSize: 10.5,
                     color: '#0F766E',
                     textDecoration: 'none',
-                    fontWeight: 600,
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-display)',
+                    transition: 'color 0.15s ease',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
-                  onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#047857')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = '#0F766E')}
                 >
                   Forgot password?
                 </Link>
@@ -250,38 +258,39 @@ export function LoginPage() {
           {isRegister && (
             <div
               style={{
-                padding: '10px 12px',
-                borderRadius: 8,
+                padding: '12px 14px',
+                borderRadius: 'var(--radius-lg)',
                 backgroundColor: '#F8FAFC',
-                border: '1px solid #E2E8F0',
-                fontSize: 12,
-                color: '#64748B',
-                lineHeight: 1.5,
-                marginBottom: 18,
+                border: '1.5px solid #E2E8F0',
+                fontSize: 10,
+                color: '#475569',
+                lineHeight: 1.6,
+                marginBottom: 20,
               }}
             >
-              <strong>Role Assignment Policy:</strong>
-              <br />
-              &bull; <code>hemasrichowdary@gmail.com</code> &rarr; <strong>Admin</strong>
-              <br />
-              &bull; <code>@vitap</code> emails &rarr; <strong>Auditor</strong>
-              <br />
-              &bull; All other email domains &rarr; <strong>Viewer</strong>
+              <strong style={{ color: '#0F172A' }}>Role Assignment Policy:</strong>
+              <div style={{ marginTop: 4 }}>
+                &bull; <code>hemasrichowdary@gmail.com</code> &rarr; <strong style={{ color: '#7E22CE' }}>Admin</strong>
+                <br />
+                &bull; <code>@vit</code> &amp; <code>@vcomply</code> domains &rarr; <strong style={{ color: '#1D4ED8' }}>Auditor</strong>
+                <br />
+                &bull; All other email domains &rarr; <strong style={{ color: '#334155' }}>Viewer</strong>
+              </div>
             </div>
           )}
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="btn btn-primary"
-            style={{ width: '100%', justifyContent: 'center', padding: '12px 16px', fontSize: 15, marginTop: 4 }}
+            className="auth-btn-pill"
+            style={{ marginTop: 6 }}
           >
             {isSubmitting
               ? 'Connecting...'
               : isRegister
               ? 'Register & Proceed to MFA'
               : 'Sign In & Proceed to MFA'}
-            <ArrowRight size={16} />
+            <ArrowRight size={17} />
           </button>
         </form>
       </div>

@@ -50,8 +50,8 @@ export function UserProfileModal({ isOpen, onClose }) {
           bg: '#EFF6FF',
           border: '#BFDBFE',
           color: '#1D4ED8',
-          tag: 'Institutional Auditor',
-          desc: 'Assigned via @vitap institutional email. Full authority to create, edit, assess obligations, and attach audit evidence.',
+          tag: 'Compliance & Institutional Auditor',
+          desc: 'Assigned via @vit and @vcomply domains. Full authority to create, edit, assess obligations, and attach audit evidence.',
         };
       default:
         return {

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from '../context/ToastContext.jsx';
-import { Key, Lock, ArrowRight, CheckCircle, AlertCircle } from '../components/Icons.jsx';
+import { Key, Lock, ArrowRight, CheckCircle, Shield } from '../components/Icons.jsx';
 import authService from '../services/authService.js';
+import { OtpCirclesInput } from '../components/OtpCirclesInput.jsx';
 
 export function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ export function ForgotPasswordPage() {
   };
 
   const handleConfirmReset = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (otp.trim().length !== 6) {
       toast.warning('Please enter the 6-digit reset code');
       return;
@@ -69,34 +70,53 @@ export function ForgotPasswordPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #ECFDF5 0%, #E6F4F1 50%, #D8EFEA 100%)',
-        backgroundColor: '#E6F4F1',
-        padding: 20,
-      }}
-    >
+    <div className="auth-page-container">
+      {/* Decorative ambient blur spheres */}
       <div
         style={{
-          maxWidth: 460,
-          width: '100%',
-          backgroundColor: '#FFFFFF',
-          borderRadius: 16,
-          border: '1px solid #CCFBF1',
-          boxShadow: '0 20px 40px -12px rgba(15, 118, 110, 0.15)',
-          padding: 36,
+          position: 'absolute',
+          width: 320,
+          height: 320,
+          borderRadius: '50%',
+          background: 'rgba(16, 185, 129, 0.12)',
+          filter: 'blur(70px)',
+          top: '5%',
+          left: '10%',
+          pointerEvents: 'none',
         }}
-      >
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 6px 0' }}>
-            EvidenceLoop
-          </h1>
-          <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: 0 }}>
+      />
+      <div
+        style={{
+          position: 'absolute',
+          width: 380,
+          height: 380,
+          borderRadius: '50%',
+          background: 'rgba(13, 148, 136, 0.14)',
+          filter: 'blur(80px)',
+          bottom: '5%',
+          right: '10%',
+          pointerEvents: 'none',
+        }}
+      />
+
+      <div className="auth-card">
+        {/* Brand Header */}
+        <div style={{ textAlign: 'center', marginBottom: 26 }}>
+          <div
+            className="auth-badge-pill"
+            style={{
+              backgroundColor: '#ECFDF5',
+              color: '#0F766E',
+              border: '1px solid #A7F3D0',
+              boxShadow: '0 1px 3px rgba(16, 185, 129, 0.1)',
+            }}
+          >
+            <Shield size={14} />
+            <span>Account Security</span>
+          </div>
+
+          <h1 className="auth-brand-title">EvidenceLoop</h1>
+          <p className="auth-brand-subtitle">
             Account Password Recovery
           </p>
         </div>
@@ -104,36 +124,47 @@ export function ForgotPasswordPage() {
         {step === 1 ? (
           /* STEP 1: Enter Email */
           <div>
-            <div style={{ textAlign: 'center', marginBottom: 22 }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <div
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 6,
                   padding: '5px 14px',
-                  borderRadius: 20,
+                  borderRadius: 'var(--radius-pill)',
                   backgroundColor: '#FEF3C7',
                   color: '#92400E',
-                  fontSize: 12.5,
-                  fontWeight: 600,
-                  border: '1px solid #FCD34D',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  border: '1.5px solid #FCD34D',
                   marginBottom: 12,
+                  fontFamily: 'var(--font-display)',
                 }}
               >
                 <Key size={14} />
                 <span>Password Recovery</span>
               </div>
-              <h2 style={{ fontSize: 19, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 8px 0' }}>
+              <h2
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 17,
+                  fontWeight: 800,
+                  color: '#0F172A',
+                  margin: '0 0 8px 0',
+                }}
+              >
                 Forgot Your Password?
               </h2>
-              <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
-                Enter the email address associated with your account, and we will send you a real-time verification code to reset your password.
+              <p style={{ fontSize: 11, color: '#475569', margin: 0, lineHeight: 1.6, fontFamily: 'var(--font-display)' }}>
+                Enter the email address associated with your account, and we will send a real-time verification code to reset your password.
               </p>
             </div>
 
             <form onSubmit={handleRequestReset}>
-              <div className="form-group" style={{ marginBottom: 20 }}>
-                <label className="form-label">Email Address</label>
+              <div className="form-group" style={{ marginBottom: 22 }}>
+                <label className="form-label" style={{ fontSize: 11, fontWeight: 700, color: '#1E293B', marginBottom: 6 }}>
+                  Email Address
+                </label>
                 <input
                   type="email"
                   className="form-control"
@@ -148,17 +179,25 @@ export function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="btn btn-primary"
-                style={{ width: '100%', justifyContent: 'center', padding: '12px 16px', fontSize: 15 }}
+                className="auth-btn-pill"
               >
                 {isSubmitting ? 'Sending Reset Code...' : 'Send Password Reset Code'}
-                <ArrowRight size={16} />
+                <ArrowRight size={17} />
               </button>
 
-              <div style={{ textAlign: 'center', marginTop: 18 }}>
+              <div style={{ textAlign: 'center', marginTop: 20 }}>
                 <Link
                   to="/login"
-                  style={{ color: 'var(--text-secondary)', fontSize: 13.5, textDecoration: 'none' }}
+                  style={{
+                    color: '#64748B',
+                    fontSize: 10.5,
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    fontFamily: 'var(--font-display)',
+                    transition: 'color 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#0F172A')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = '#64748B')}
                 >
                   &larr; Back to Sign In
                 </Link>
@@ -166,34 +205,43 @@ export function ForgotPasswordPage() {
             </form>
           </div>
         ) : (
-          /* STEP 2: Enter Code & New Password */
+          /* STEP 2: Enter Code in 6 Circles & Set New Password */
           <div>
-            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <div style={{ textAlign: 'center', marginBottom: 22 }}>
               <div
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 6,
                   padding: '5px 14px',
-                  borderRadius: 20,
+                  borderRadius: 'var(--radius-pill)',
                   backgroundColor: '#ECFDF5',
                   color: '#0F766E',
-                  fontSize: 12.5,
-                  fontWeight: 600,
-                  border: '1px solid #A7F3D0',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  border: '1.5px solid #A7F3D0',
                   marginBottom: 12,
+                  fontFamily: 'var(--font-display)',
                 }}
               >
                 <CheckCircle size={14} />
                 <span>Code Dispatched</span>
               </div>
-              <h2 style={{ fontSize: 19, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 8px 0' }}>
+              <h2
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 17,
+                  fontWeight: 800,
+                  color: '#0F172A',
+                  margin: '0 0 8px 0',
+                }}
+              >
                 Reset Your Password
               </h2>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+              <p style={{ fontSize: 11, color: '#475569', margin: 0, lineHeight: 1.5, fontFamily: 'var(--font-display)' }}>
                 Enter the 6-digit code sent to:
                 <br />
-                <strong style={{ color: 'var(--text-primary)' }}>{email}</strong>
+                <strong style={{ color: '#0F172A', fontWeight: 700 }}>{email}</strong>
               </p>
             </div>
 
@@ -201,22 +249,22 @@ export function ForgotPasswordPage() {
             {previewOtp && (
               <div
                 style={{
-                  marginBottom: 18,
-                  padding: '10px 14px',
-                  borderRadius: 8,
+                  marginBottom: 20,
+                  padding: '12px 16px',
+                  borderRadius: 'var(--radius-lg)',
                   backgroundColor: '#F0FDF4',
-                  border: '1px solid #BBF7D0',
+                  border: '1.5px solid #BBF7D0',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: 10,
+                  gap: 12,
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#166534' }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                     Reset Code
                   </div>
-                  <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'monospace', color: '#15803D', letterSpacing: 2 }}>
+                  <div style={{ fontSize: 17, fontWeight: 800, fontFamily: 'monospace', color: '#15803D', letterSpacing: 3 }}>
                     {previewOtp}
                   </div>
                 </div>
@@ -224,7 +272,15 @@ export function ForgotPasswordPage() {
                   type="button"
                   onClick={() => setOtp(previewOtp)}
                   className="btn btn-secondary btn-sm"
-                  style={{ fontSize: 11.5, padding: '4px 10px' }}
+                  style={{
+                    borderRadius: 'var(--radius-pill)',
+                    fontSize: 10,
+                    padding: '6px 14px',
+                    fontWeight: 700,
+                    color: '#0F766E',
+                    border: '1px solid #A7F3D0',
+                    backgroundColor: '#FFFFFF',
+                  }}
                 >
                   Auto-fill
                 </button>
@@ -232,28 +288,34 @@ export function ForgotPasswordPage() {
             )}
 
             <form onSubmit={handleConfirmReset}>
-              <div className="form-group" style={{ marginBottom: 16 }}>
-                <label className="form-label">6-Digit Reset Code</label>
-                <input
-                  type="text"
-                  maxLength={6}
-                  placeholder="000000"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+              <div style={{ textAlign: 'center', marginBottom: 6 }}>
+                <label
+                  className="form-label"
                   style={{
-                    fontSize: 22,
+                    fontSize: 10.5,
                     fontWeight: 700,
-                    letterSpacing: 6,
-                    textAlign: 'center',
-                    fontFamily: 'monospace',
+                    color: '#1E293B',
+                    display: 'block',
+                    marginBottom: 4,
                   }}
-                  className="form-control"
-                  required
-                />
+                >
+                  6-Digit Reset Code (1 Digit Per Circle)
+                </label>
               </div>
 
-              <div className="form-group" style={{ marginBottom: 16 }}>
-                <label className="form-label">New Password</label>
+              {/* 6 Round Circular Inputs Component */}
+              <OtpCirclesInput
+                length={6}
+                value={otp}
+                onChange={setOtp}
+                disabled={isSubmitting}
+                autoFocus={true}
+              />
+
+              <div className="form-group" style={{ marginBottom: 18 }}>
+                <label className="form-label" style={{ fontSize: 11, fontWeight: 700, color: '#1E293B', marginBottom: 6 }}>
+                  New Password
+                </label>
                 <input
                   type="password"
                   className="form-control"
@@ -264,8 +326,10 @@ export function ForgotPasswordPage() {
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: 20 }}>
-                <label className="form-label">Confirm New Password</label>
+              <div className="form-group" style={{ marginBottom: 24 }}>
+                <label className="form-label" style={{ fontSize: 11, fontWeight: 700, color: '#1E293B', marginBottom: 6 }}>
+                  Confirm New Password
+                </label>
                 <input
                   type="password"
                   className="form-control"
@@ -279,17 +343,24 @@ export function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={isSubmitting || otp.length !== 6 || newPassword.length < 6}
-                className="btn btn-primary"
-                style={{ width: '100%', justifyContent: 'center', padding: '12px 16px', fontSize: 15 }}
+                className="auth-btn-pill"
               >
                 {isSubmitting ? 'Updating Password...' : 'Reset Password & Sign In'}
               </button>
 
-              <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <div style={{ textAlign: 'center', marginTop: 18 }}>
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 13 }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#64748B',
+                    cursor: 'pointer',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    fontFamily: 'var(--font-display)',
+                  }}
                 >
                   &larr; Change Email
                 </button>
