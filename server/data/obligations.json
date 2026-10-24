@@ -1,5 +1,19 @@
 [
   {
+    "_id": "obl_1792845070015",
+    "title": "Admin Authorized Obligation",
+    "description": "",
+    "category": "Compliance",
+    "owner": "Sarah Jenkins",
+    "dueDate": "2026-12-31",
+    "priority": "Medium",
+    "status": "Open",
+    "evidenceRequired": true,
+    "evidence": [],
+    "createdAt": "2026-10-24T12:31:10.015Z",
+    "updatedAt": "2026-10-24T12:31:10.015Z"
+  },
+  {
     "_id": "obl_1792843748298",
     "title": "Annual",
     "description": "",

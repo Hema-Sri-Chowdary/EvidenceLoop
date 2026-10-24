@@ -27,12 +27,22 @@ async function request(endpoint, options = {}) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+  const headers = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    ...(customConfig.headers || {}),
+  };
+
+  try {
+    const token = localStorage.getItem('evidenceloop_token');
+    if (token && !headers['Authorization']) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  } catch {}
+
   const config = {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
+    headers,
     signal: controller.signal,
     ...customConfig,
   };
@@ -54,12 +64,19 @@ async function request(endpoint, options = {}) {
     }
 
     if (!response.ok) {
+      if (response.status === 401) {
+        try {
+          localStorage.removeItem('evidenceloop_token');
+          localStorage.removeItem('evidenceloop_user');
+          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+        } catch {}
+      }
       const error = new Error(
         (data && (data.message || data.error)) || `Request failed with status ${response.status}`
       );
       error.status = response.status;
       error.response = { status: response.status, data };
-      error.userMessage = error.message;
+      error.userMessage = (data && (data.message || data.error)) || error.message;
       throw error;
     }
 

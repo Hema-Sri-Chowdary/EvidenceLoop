@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Edit3, Trash2, LinkIcon, Calendar } from './Icons.jsx';
 import StatusBadge from './StatusBadge.jsx';
 import { formatDate, formatDeadlineRelative } from '../utils/dateUtils.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export function ObligationTable({ obligations = [], onDeleteRequest }) {
   const navigate = useNavigate();
+  const { canMutate, canDelete } = useAuth();
 
   return (
     <div className="table-wrapper">
@@ -114,22 +116,26 @@ export function ObligationTable({ obligations = [], onDeleteRequest }) {
                       >
                         <Eye size={16} />
                       </button>
-                      <button
-                        onClick={() => navigate(`/obligations/${item._id}/edit`)}
-                        className="btn-icon"
-                        title="Edit Obligation"
-                        aria-label={`Edit ${item.title}`}
-                      >
-                        <Edit3 size={16} />
-                      </button>
-                      <button
-                        onClick={() => onDeleteRequest(item)}
-                        className="btn-icon danger"
-                        title="Delete Obligation"
-                        aria-label={`Delete ${item.title}`}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {canMutate && (
+                        <button
+                          onClick={() => navigate(`/obligations/${item._id}/edit`)}
+                          className="btn-icon"
+                          title="Edit Obligation"
+                          aria-label={`Edit ${item.title}`}
+                        >
+                          <Edit3 size={16} />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => onDeleteRequest(item)}
+                          className="btn-icon danger"
+                          title="Delete Obligation"
+                          aria-label={`Delete ${item.title}`}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

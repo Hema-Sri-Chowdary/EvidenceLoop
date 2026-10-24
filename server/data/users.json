@@ -1,0 +1,32 @@
+[
+  {
+    "_id": "usr_admin_001",
+    "name": "Sarah Jenkins (Chief Compliance Officer)",
+    "email": "admin@evidenceloop.com",
+    "password": "$2b$10$veXlh0gib/qvSpwn56iqJO2V.WOZI5ZUyFEUvcLpmiBcExkiH6eqe",
+    "role": "Admin",
+    "mfaEnabled": true,
+    "createdAt": "2026-10-24T12:29:37.880Z",
+    "updatedAt": "2026-10-24T12:29:37.881Z"
+  },
+  {
+    "_id": "usr_auditor_002",
+    "name": "Marcus Vance (Lead Internal Auditor)",
+    "email": "auditor@evidenceloop.com",
+    "password": "$2b$10$QfsCreASadTMXyAOpPJml.6Hk9.4hvpQR1tNnXZisd5bsX8X4BcKC",
+    "role": "Auditor",
+    "mfaEnabled": true,
+    "createdAt": "2026-10-24T12:29:37.881Z",
+    "updatedAt": "2026-10-24T12:29:37.881Z"
+  },
+  {
+    "_id": "usr_viewer_003",
+    "name": "Elena Rostova (Compliance Observer)",
+    "email": "viewer@evidenceloop.com",
+    "password": "$2b$10$6l7JlqKnfovT86MEk4c1N.Qy6Syd.S.K8ukoSTV8x.44bSCzgpqGi",
+    "role": "Viewer",
+    "mfaEnabled": true,
+    "createdAt": "2026-10-24T12:29:37.881Z",
+    "updatedAt": "2026-10-24T12:29:37.881Z"
+  }
+]

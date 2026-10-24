@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import { connectDB, isDbConnected } from './config/db.js';
 import obligationRoutes from './routes/obligationRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import { seedMongoUsersIfEmpty } from './config/userStore.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -93,6 +95,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/obligations', obligationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
@@ -103,6 +106,7 @@ app.use(errorHandler);
 // Connect to MongoDB & Start Server
 async function startServer() {
   await connectDB();
+  await seedMongoUsersIfEmpty();
 
   const server = app.listen(PORT, () => {
     console.log(`[EvidenceLoop API] Server running on http://localhost:${PORT}`);

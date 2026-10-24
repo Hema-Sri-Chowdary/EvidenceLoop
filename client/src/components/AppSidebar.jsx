@@ -1,28 +1,34 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, CheckSquare, PlusCircle, ShieldAlert, X, Database } from './Icons.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export function AppSidebar({ isOpen, onClose, onResetDemo }) {
+  const { canMutate, isAdmin, role } = useAuth();
+
   const navItems = [
     {
       label: 'Dashboard',
       to: '/',
       icon: LayoutDashboard,
       end: true,
+      visible: true,
     },
     {
       label: 'Obligations Register',
       to: '/obligations',
       icon: CheckSquare,
       end: false,
+      visible: true,
     },
     {
       label: 'Create Obligation',
       to: '/obligations/new',
       icon: PlusCircle,
       end: false,
+      visible: canMutate,
     },
-  ];
+  ].filter((item) => item.visible);
 
   return (
     <>
@@ -96,7 +102,7 @@ export function AppSidebar({ isOpen, onClose, onResetDemo }) {
           <p className="sidebar-audit-desc">
             Evidence is strictly required. Tasks marked completed without proof remain flagged.
           </p>
-          {onResetDemo && (
+          {onResetDemo && isAdmin && (
             <button
               onClick={onResetDemo}
               className="btn btn-secondary btn-sm"

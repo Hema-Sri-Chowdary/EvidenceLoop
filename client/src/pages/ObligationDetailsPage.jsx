@@ -18,11 +18,13 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { obligationService } from '../services/obligationService.js';
 import { formatDate, formatDeadlineRelative } from '../utils/dateUtils.js';
 import { useToast } from '../context/ToastContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export function ObligationDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const { canMutate, canDelete } = useAuth();
 
   const [obligation, setObligation] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -110,14 +112,18 @@ export function ObligationDetailsPage() {
               <ArrowLeft size={16} />
               <span>Back</span>
             </button>
-            <button onClick={() => navigate(`/obligations/${id}/edit`)} className="btn btn-secondary">
-              <Edit3 size={15} style={{ color: 'var(--text-secondary)' }} />
-              <span>Edit</span>
-            </button>
-            <button onClick={() => setShowDeleteConfirm(true)} className="btn btn-outline-danger">
-              <Trash2 size={15} />
-              <span>Delete</span>
-            </button>
+            {canMutate && (
+              <button onClick={() => navigate(`/obligations/${id}/edit`)} className="btn btn-secondary">
+                <Edit3 size={15} style={{ color: 'var(--text-secondary)' }} />
+                <span>Edit</span>
+              </button>
+            )}
+            {canDelete && (
+              <button onClick={() => setShowDeleteConfirm(true)} className="btn btn-outline-danger">
+                <Trash2 size={15} />
+                <span>Delete</span>
+              </button>
+            )}
           </div>
         }
       />
@@ -197,7 +203,7 @@ export function ObligationDetailsPage() {
           <EvidenceList
             evidence={obligation.evidence || []}
             evidenceRequired={obligation.evidenceRequired}
-            onAddEvidence={handleAddEvidence}
+            onAddEvidence={canMutate ? handleAddEvidence : null}
             isAdding={isAddingEvidence}
           />
         </div>

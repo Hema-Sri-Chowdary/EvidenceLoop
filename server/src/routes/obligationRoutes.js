@@ -13,17 +13,21 @@ import {
   validateObligationInput,
   validateEvidenceInput,
 } from '../middleware/validate.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/', getObligations);
-router.post('/', validateObligationInput, createObligation);
-router.post('/seed', seedObligations);
+// Read operations: accessible to all authenticated users (Admin, Auditor, Viewer)
+router.get('/', requireAuth, getObligations);
+router.get('/:id', requireAuth, validateObjectId, getObligationById);
 
-router.get('/:id', validateObjectId, getObligationById);
-router.patch('/:id', validateObjectId, validateObligationInput, updateObligation);
-router.delete('/:id', validateObjectId, deleteObligation);
+// Mutation operations: restricted to Admin and Auditor
+router.post('/', requireAuth, requireRole('Admin', 'Auditor'), validateObligationInput, createObligation);
+router.patch('/:id', requireAuth, requireRole('Admin', 'Auditor'), validateObjectId, validateObligationInput, updateObligation);
+router.post('/:id/evidence', requireAuth, requireRole('Admin', 'Auditor'), validateObjectId, validateEvidenceInput, addEvidence);
 
-router.post('/:id/evidence', validateObjectId, validateEvidenceInput, addEvidence);
+// Destructive operations: restricted strictly to Admin
+router.delete('/:id', requireAuth, requireRole('Admin'), validateObjectId, deleteObligation);
+router.post('/seed', requireAuth, requireRole('Admin'), seedObligations);
 
 export default router;
