@@ -71,6 +71,21 @@ export function AuthProvider({ children }) {
     return authService.register(payload);
   }, []);
 
+  const updateProfile = useCallback(async ({ name, org }) => {
+    const data = await authService.updateProfile({ name, org });
+    if (data.user) {
+      setUser(data.user);
+    }
+    return data;
+  }, []);
+
+  const deleteAccount = useCallback(async () => {
+    const data = await authService.deleteAccount();
+    setUser(null);
+    setToken(null);
+    return data;
+  }, []);
+
   const logout = useCallback(() => {
     authService.clearAuth();
     setUser(null);
@@ -99,6 +114,8 @@ export function AuthProvider({ children }) {
     verifyMfa,
     resendOtp,
     register,
+    updateProfile,
+    deleteAccount,
     logout,
   };
 

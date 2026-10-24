@@ -10,6 +10,7 @@ import EditObligationPage from './pages/EditObligationPage.jsx';
 import ObligationDetailsPage from './pages/ObligationDetailsPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
 export function App() {
@@ -27,6 +28,7 @@ export function App() {
             }
           >
             <Route index element={<DashboardPage />} />
+            <Route path="profile" element={<ProfilePage />} />
             <Route path="obligations" element={<ObligationsPage />} />
             <Route
               path="obligations/new"

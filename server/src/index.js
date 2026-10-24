@@ -116,6 +116,11 @@ async function startServer() {
   return server;
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+} else {
+  // In Vercel serverless environment, initialize database without starting an HTTP listener
+  connectDB().then(seedMongoUsersIfEmpty).catch((err) => console.warn('[Vercel DB Init]', err.message));
+}
 
 export default app;

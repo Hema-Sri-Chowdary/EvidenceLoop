@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { Shield, Lock, User, Key, CheckCircle, ArrowRight, RefreshCw, AlertCircle } from '../components/Icons.jsx';
+import { Key, ArrowRight, Building, User, Lock, CheckCircle, Shield } from '../components/Icons.jsx';
 import authService from '../services/authService.js';
 
 export function LoginPage() {
@@ -16,7 +16,7 @@ export function LoginPage() {
     name: '',
     email: '',
     password: '',
-    role: 'Auditor',
+    org: '',
   });
 
   // MFA State
@@ -31,6 +31,20 @@ export function LoginPage() {
   const [countdown, setCountdown] = useState(600);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [demoAccounts, setDemoAccounts] = useState([]);
+
+  // Determine dynamic role based on input email
+  const getDynamicRole = (email) => {
+    const clean = (email || '').trim().toLowerCase();
+    if (clean === 'hemasrichowdary@gmail.com') {
+      return { role: 'Admin', color: '#7E22CE', bg: '#FAF5FF', border: '#D8B4FE', label: 'Admin (EvidenceLoop Principal)' };
+    }
+    if (clean.includes('@vitap') || clean.includes('.vitap.')) {
+      return { role: 'Auditor', color: '#1D4ED8', bg: '#EFF6FF', border: '#BFDBFE', label: 'Auditor (VIT-AP Institutional Auditor)' };
+    }
+    return { role: 'Viewer', color: '#475569', bg: '#F8FAFC', border: '#CBD5E1', label: 'Viewer (Compliance Observer)' };
+  };
+
+  const dynamicRole = getDynamicRole(formData.email);
 
   // Load demo accounts
   useEffect(() => {
@@ -70,7 +84,7 @@ export function LoginPage() {
     try {
       if (isRegister) {
         const res = await register(formData);
-        toast.success(res.message, 'Account Created');
+        toast.success(res.message, 'Account Registered');
         setMfaState({
           active: true,
           otpSessionToken: res.otpSessionToken,
@@ -80,7 +94,7 @@ export function LoginPage() {
         });
       } else {
         const res = await login(formData.email, formData.password);
-        toast.info(res.message, 'MFA Code Dispatched');
+        toast.info(res.message, 'Real-Time MFA Dispatched');
         setMfaState({
           active: true,
           otpSessionToken: res.otpSessionToken,
@@ -90,7 +104,7 @@ export function LoginPage() {
         });
       }
     } catch (err) {
-      toast.error(err.userMessage || 'Authentication failed. Please verify credentials.');
+      toast.error(err.userMessage || err.message || 'Authentication failed. Please verify credentials.');
     } finally {
       setIsSubmitting(false);
     }
@@ -109,7 +123,7 @@ export function LoginPage() {
       const from = location.state?.from?.pathname || '/';
       navigate(from, { replace: true });
     } catch (err) {
-      toast.error(err.userMessage || 'Incorrect verification code. Please check your OTP.');
+      toast.error(err.userMessage || err.message || 'Incorrect verification code. Please check your OTP.');
     } finally {
       setIsSubmitting(false);
     }
@@ -118,11 +132,12 @@ export function LoginPage() {
   const handleResend = async () => {
     try {
       const res = await resendOtp(mfaState.otpSessionToken);
-      setMfaState((prev) => ({ ...prev, previewOtp: res.previewOtp }));
-      toast.success(res.message, 'New Code Dispatched');
-      setCountdown(600);
+      if (res.previewOtp) {
+        setMfaState((prev) => ({ ...prev, previewOtp: res.previewOtp }));
+      }
+      toast.info('New verification code dispatched in real time.');
     } catch (err) {
-      toast.error(err.userMessage || 'Failed to resend verification code.');
+      toast.error(err.userMessage || 'Failed to resend code');
     }
   };
 
@@ -165,19 +180,19 @@ export function LoginPage() {
           </p>
         </div>
 
-        {/* STEP 2: MFA OTP Verification */}
+        {/* STEP 2: Real-Time MFA OTP Verification */}
         {mfaState.active ? (
           <div>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, backgroundColor: '#EEF2FF', color: 'var(--primary)', fontSize: 13, fontWeight: 600, marginBottom: 12 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, backgroundColor: '#ECFDF5', color: '#0F766E', fontSize: 13, fontWeight: 600, marginBottom: 12, border: '1px solid #A7F3D0' }}>
                 <Key size={14} />
-                <span>Multi-Factor Authentication (MFA)</span>
+                <span>Real-Time Multi-Factor Authentication</span>
               </div>
               <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px 0' }}>
                 Enter Verification Code
               </h2>
               <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
-                A 6-digit security OTP has been sent to your registered account:
+                A 6-digit real-time security OTP has been dispatched to:
                 <br />
                 <strong style={{ color: 'var(--text-primary)' }}>{mfaState.email}</strong>
               </p>
@@ -188,7 +203,7 @@ export function LoginPage() {
               <div style={{ marginBottom: 20, padding: '12px 14px', borderRadius: 8, backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: '#166534' }}>
-                    MFA Security Dispatch (OTP)
+                    Real-Time MFA Security Code
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'monospace', color: '#15803D', letterSpacing: 2 }}>
                     {mfaState.previewOtp}
@@ -238,7 +253,7 @@ export function LoginPage() {
                 <button
                   type="button"
                   onClick={handleResend}
-                  style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+                  style={{ background: 'none', border: 'none', color: '#0F766E', cursor: 'pointer', fontWeight: 600, padding: 0 }}
                 >
                   Resend Code
                 </button>
@@ -312,7 +327,7 @@ export function LoginPage() {
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="e.g. Alex Morgan"
+                    placeholder="e.g. Hema Sri Chowdary"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
@@ -320,17 +335,52 @@ export function LoginPage() {
                 </div>
               )}
 
-              <div className="form-group" style={{ marginBottom: 16 }}>
+              <div className="form-group" style={{ marginBottom: 14 }}>
                 <label className="form-label">Email Address</label>
                 <input
                   type="email"
                   className="form-control"
-                  placeholder="name@company.com"
+                  placeholder="name@company.com or name@vitap.ac.in"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                 />
               </div>
+
+              {/* Dynamic Role Indicator during registration */}
+              {isRegister && formData.email && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    backgroundColor: dynamicRole.bg,
+                    border: `1px solid ${dynamicRole.border}`,
+                    color: dynamicRole.color,
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    marginBottom: 16,
+                  }}
+                >
+                  <Shield size={14} />
+                  <span>Assigned: {dynamicRole.label}</span>
+                </div>
+              )}
+
+              {isRegister && (
+                <div className="form-group" style={{ marginBottom: 16 }}>
+                  <label className="form-label">Organization / Affiliation</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="e.g. VIT-AP University"
+                    value={formData.org}
+                    onChange={(e) => setFormData({ ...formData, org: e.target.value })}
+                  />
+                </div>
+              )}
 
               <div className="form-group" style={{ marginBottom: 16 }}>
                 <label className="form-label">Password</label>
@@ -344,18 +394,27 @@ export function LoginPage() {
                 />
               </div>
 
+              {/* Role Rules Explanatory Banner */}
               {isRegister && (
-                <div className="form-group" style={{ marginBottom: 20 }}>
-                  <label className="form-label">Audit Readiness Role</label>
-                  <select
-                    className="form-control"
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  >
-                    <option value="Auditor">Auditor (Full creation, editing & evidence attachment)</option>
-                    <option value="Admin">Admin (Full administrative control & record deletion)</option>
-                    <option value="Viewer">Viewer (Read-only observation)</option>
-                  </select>
+                <div
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: 8,
+                    backgroundColor: '#F8FAFC',
+                    border: '1px solid #E2E8F0',
+                    fontSize: 12,
+                    color: '#64748B',
+                    lineHeight: 1.5,
+                    marginBottom: 18,
+                  }}
+                >
+                  <strong>Role Assignment Policy:</strong>
+                  <br />
+                  &bull; <code>hemasrichowdary@gmail.com</code> &rarr; <strong>Admin</strong>
+                  <br />
+                  &bull; <code>@vitap</code> emails &rarr; <strong>Auditor</strong>
+                  <br />
+                  &bull; All other email domains &rarr; <strong>Viewer</strong>
                 </div>
               )}
 
@@ -363,22 +422,22 @@ export function LoginPage() {
                 type="submit"
                 disabled={isSubmitting}
                 className="btn btn-primary"
-                style={{ width: '100%', justifyContent: 'center', padding: '12px 16px', fontSize: 15, marginTop: 8 }}
+                style={{ width: '100%', justifyContent: 'center', padding: '12px 16px', fontSize: 15, marginTop: 4 }}
               >
                 {isSubmitting
                   ? 'Processing...'
                   : isRegister
-                  ? 'Register & Send OTP'
-                  : 'Sign In & Send MFA Code'}
+                  ? 'Register & Send MFA Code'
+                  : 'Sign In & Send Real-Time MFA Code'}
                 <ArrowRight size={16} />
               </button>
             </form>
 
             {/* Quick Demo Credentials */}
             {!isRegister && demoAccounts.length > 0 && (
-              <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+              <div style={{ marginTop: 24, paddingTop: 18, borderTop: '1px solid var(--border)' }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>
-                  Quick-Fill Demo Credentials
+                  Quick-Fill Verified Accounts
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {demoAccounts.map((acc) => (
@@ -399,14 +458,16 @@ export function LoginPage() {
                         fontSize: 13,
                         transition: 'background-color 0.15s ease',
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#EEF2FF')}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ECFDF5')}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
                     >
                       <div>
-                        <strong style={{ color: 'var(--text-primary)' }}>{acc.role}</strong>
+                        <strong style={{ color: acc.role === 'Admin' ? '#7E22CE' : acc.role === 'Auditor' ? '#1D4ED8' : '#475569' }}>
+                          {acc.role}
+                        </strong>
                         <span style={{ color: 'var(--text-secondary)', marginLeft: 8 }}>{acc.email}</span>
                       </div>
-                      <span style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 600 }}>Use</span>
+                      <span style={{ fontSize: 11, color: '#0F766E', fontWeight: 600 }}>Use</span>
                     </button>
                   ))}
                 </div>

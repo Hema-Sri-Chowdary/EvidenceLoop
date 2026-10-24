@@ -58,6 +58,7 @@ export async function requireAuth(req, res, next) {
       email: user.email,
       name: user.name,
       role: user.role,
+      org: user.org,
     };
 
     next();

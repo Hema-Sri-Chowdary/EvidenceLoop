@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, CheckSquare, PlusCircle, ShieldAlert, X, Database } from './Icons.jsx';
+import { LayoutDashboard, CheckSquare, PlusCircle, ShieldAlert, X, Database, User } from './Icons.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export function AppSidebar({ isOpen, onClose, onResetDemo }) {
@@ -27,6 +27,13 @@ export function AppSidebar({ isOpen, onClose, onResetDemo }) {
       icon: PlusCircle,
       end: false,
       visible: canMutate,
+    },
+    {
+      label: 'User Profile',
+      to: '/profile',
+      icon: User,
+      end: false,
+      visible: true,
     },
   ].filter((item) => item.visible);
 

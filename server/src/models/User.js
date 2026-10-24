@@ -31,6 +31,12 @@ const UserSchema = new mongoose.Schema(
       },
       default: 'Auditor',
     },
+    org: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Organization cannot exceed 100 characters'],
+      default: 'General Organization',
+    },
     mfaEnabled: {
       type: Boolean,
       default: true,

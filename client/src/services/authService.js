@@ -77,8 +77,8 @@ export const authService = {
   /**
    * Register a new user account
    */
-  async register({ name, email, password, role }) {
-    const res = await apiClient.post('/auth/register', { name, email, password, role });
+  async register({ name, email, password, org }) {
+    const res = await apiClient.post('/auth/register', { name, email, password, org });
     return res.data;
   },
 
@@ -90,6 +90,26 @@ export const authService = {
     if (res.data && res.data.user) {
       this.setUser(res.data.user);
     }
+    return res.data;
+  },
+
+  /**
+   * Update authenticated user's profile (name & org)
+   */
+  async updateProfile({ name, org }) {
+    const res = await apiClient.put('/auth/me', { name, org });
+    if (res.data && res.data.user) {
+      this.setUser(res.data.user);
+    }
+    return res.data;
+  },
+
+  /**
+   * Permanently delete authenticated user's account
+   */
+  async deleteAccount() {
+    const res = await apiClient.delete('/auth/me');
+    this.clearAuth();
     return res.data;
   },
 
