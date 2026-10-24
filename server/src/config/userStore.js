@@ -386,5 +386,28 @@ export async function deleteUserById(id) {
   return false;
 }
 
+export async function updateUserPassword(email, newHashedPassword) {
+  const cleanEmail = email.trim().toLowerCase();
+  if (isDbConnected()) {
+    const user = await User.findOne({ email: cleanEmail });
+    if (!user) return false;
+    user.password = newHashedPassword;
+    await user.save();
+    return true;
+  }
+
+  if (fallbackUsers.length === 0) {
+    await initUserStore();
+  }
+
+  const user = fallbackUsers.find((u) => u.email === cleanEmail);
+  if (!user) return false;
+
+  user.password = newHashedPassword;
+  user.updatedAt = new Date().toISOString();
+  saveUsersFile(fallbackUsers);
+  return true;
+}
+
 // Immediately initialize fallback store in background
 initUserStore();

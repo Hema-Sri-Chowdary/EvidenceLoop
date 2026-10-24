@@ -10,6 +10,7 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
 
+// EvidenceLoop Express Application & Security Gateway
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -111,6 +112,15 @@ async function startServer() {
   const server = app.listen(PORT, () => {
     console.log(`[EvidenceLoop API] Server running on http://localhost:${PORT}`);
     console.log(`[EvidenceLoop API] Health check at http://localhost:${PORT}/api/health`);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`\x1b[33m[EvidenceLoop Warning]\x1b[0m Port ${PORT} is already in use by another instance.`);
+      console.error(`\x1b[33m[EvidenceLoop Hint]\x1b[0m Close any duplicate terminal running 'npm run dev', or stop the process on port ${PORT}.`);
+    } else {
+      console.error('[EvidenceLoop Server Error]', err.message);
+    }
   });
 
   return server;

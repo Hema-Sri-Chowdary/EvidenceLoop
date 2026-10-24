@@ -260,7 +260,7 @@ export function UserProfileModal({ isOpen, onClose }) {
                 <input
                   type="text"
                   className="input"
-                  placeholder="e.g. VIT-AP University"
+                  placeholder="Enter organization / university"
                   value={formData.org}
                   onChange={(e) => setFormData({ ...formData, org: e.target.value })}
                 />

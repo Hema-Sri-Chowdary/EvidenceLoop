@@ -252,7 +252,7 @@ export function ProfilePage() {
                   className="input"
                   value={formData.org}
                   onChange={(e) => setFormData({ ...formData, org: e.target.value })}
-                  placeholder="e.g. VIT-AP University"
+                  placeholder="Enter organization / university"
                 />
               </div>
 

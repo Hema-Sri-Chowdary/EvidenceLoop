@@ -10,6 +10,8 @@ import EditObligationPage from './pages/EditObligationPage.jsx';
 import ObligationDetailsPage from './pages/ObligationDetailsPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
+import MfaPage from './pages/MfaPage.jsx';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
@@ -19,6 +21,8 @@ export function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/mfa" element={<MfaPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route
             path="/"
             element={

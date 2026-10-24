@@ -1,10 +1,12 @@
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import {
   findUserByEmail,
   findUserById,
   createUser,
   updateUserProfile,
   deleteUserById,
+  updateUserPassword,
   determineRoleByEmail,
   determineOrgByEmail,
   DEFAULT_USERS,
@@ -13,6 +15,8 @@ import {
   createOtpSession,
   verifyOtp,
   resendOtp as serviceResendOtp,
+  createPasswordResetSession,
+  verifyPasswordResetOtp,
 } from '../services/otpService.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'evidenceloop_jwt_secret_audit_readiness_key_2026_secure';
@@ -327,6 +331,91 @@ export function getDemoAccounts(req, res) {
   });
 }
 
+/**
+ * POST /api/auth/forgot-password
+ * Step 1: Request password reset OTP
+ */
+export async function forgotPassword(req, res, next) {
+  try {
+    const { email } = req.body;
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ success: false, message: 'Valid email address is required' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await findUserByEmail(cleanEmail);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'No registered account found with this email address.',
+      });
+    }
+
+    const { resetSessionToken, expiresInSeconds, previewOtp } = createPasswordResetSession(user);
+
+    return res.json({
+      success: true,
+      message: `Password reset verification code dispatched to ${user.email}`,
+      resetSessionToken,
+      expiresInSeconds,
+      previewOtp,
+      email: user.email,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * POST /api/auth/reset-password
+ * Step 2: Verify reset OTP and update password
+ */
+export async function resetPassword(req, res, next) {
+  try {
+    const { resetSessionToken, otp, newPassword } = req.body;
+
+    if (!resetSessionToken || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reset session token and 6-digit code are required',
+      });
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters long',
+      });
+    }
+
+    const result = verifyPasswordResetOtp(resetSessionToken, otp);
+    if (!result.valid) {
+      return res.status(400).json({
+        success: false,
+        message: result.message,
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    const updated = await updateUserPassword(result.email, hashedPassword);
+    if (!updated) {
+      return res.status(500).json({
+        success: false,
+        message: 'Unable to update password. Please try again.',
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Password successfully reset! You can now sign in with your new password.',
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export default {
   login,
   verifyMfa,
@@ -336,4 +425,6 @@ export default {
   updateProfile,
   deleteAccount,
   getDemoAccounts,
+  forgotPassword,
+  resetPassword,
 };

@@ -8,6 +8,8 @@ import {
   updateProfile,
   deleteAccount,
   getDemoAccounts,
+  forgotPassword,
+  resetPassword,
 } from '../controllers/authController.js';
 import { requireAuth } from '../middleware/auth.js';
 
@@ -18,6 +20,8 @@ router.post('/login', login);
 router.post('/verify-mfa', verifyMfa);
 router.post('/resend-otp', resendOtp);
 router.post('/register', register);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 router.get('/demo-accounts', getDemoAccounts);
 
 // Protected user profile & account management endpoints

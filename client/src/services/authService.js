@@ -114,6 +114,22 @@ export const authService = {
   },
 
   /**
+   * Request password reset code
+   */
+  async forgotPassword(email) {
+    const res = await apiClient.post('/auth/forgot-password', { email });
+    return res.data;
+  },
+
+  /**
+   * Confirm password reset with 6-digit code and new password
+   */
+  async resetPassword({ resetSessionToken, otp, newPassword }) {
+    const res = await apiClient.post('/auth/reset-password', { resetSessionToken, otp, newPassword });
+    return res.data;
+  },
+
+  /**
    * Fetch preset demo accounts for one-click testing
    */
   async getDemoAccounts() {

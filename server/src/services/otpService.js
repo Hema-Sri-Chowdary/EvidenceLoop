@@ -134,10 +134,12 @@ export function createOtpSession(user) {
   // Dispatch OTP in real-time
   dispatchOtpToAccount(user.email, otp, user.name);
 
+  const hasLiveEmail = Boolean(getMailTransporter());
+
   return {
     otpSessionToken,
     expiresInSeconds: 600,
-    previewOtp: otp,
+    previewOtp: hasLiveEmail ? undefined : otp,
   };
 }
 
@@ -209,11 +211,120 @@ export function resendOtp(otpSessionToken) {
 
   dispatchOtpToAccount(session.email, newOtp, session.name);
 
+  const hasLiveEmail = Boolean(getMailTransporter());
+
   return {
     success: true,
     message: `A new real-time verification code has been dispatched to ${session.email}`,
-    previewOtp: newOtp,
+    previewOtp: hasLiveEmail ? undefined : newOtp,
   };
+}
+
+// Password reset active sessions
+const passwordResetSessions = new Map();
+
+export async function dispatchPasswordResetToAccount(email, otp, name) {
+  const timestamp = new Date().toISOString();
+  console.log('\n========================================================');
+  console.log(` [REAL-TIME PASSWORD RESET DISPATCH] [${timestamp}]`);
+  console.log(` Recipient Account: ${email} (${name || 'User'})`);
+  console.log(` Reset Code        : \x1b[33m\x1b[1m${otp}\x1b[0m`);
+  console.log(' Validity          : 10 minutes');
+  console.log('========================================================\n');
+
+  const transporter = getMailTransporter();
+  if (transporter) {
+    try {
+      const fromAddress = process.env.EMAIL_FROM || `"EvidenceLoop Security" <${process.env.SMTP_USER || process.env.EMAIL_USER || 'security@evidenceloop.com'}>`;
+      await transporter.sendMail({
+        from: fromAddress,
+        to: email,
+        subject: `Your EvidenceLoop Password Reset Code: ${otp}`,
+        text: `Hello ${name || 'User'},\n\nA password reset request was initiated for ${email}.\nYour 6-digit password reset code is: ${otp}\nValid for 10 minutes.`,
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 28px; border: 1px solid #CCFBF1; border-radius: 14px; background-color: #FFFFFF;">
+            <div style="text-align: center; margin-bottom: 24px;">
+              <h2 style="color: #0F766E; margin: 0 0 6px 0; font-size: 24px; font-weight: 700;">EvidenceLoop</h2>
+              <p style="color: #64748B; font-size: 13.5px; margin: 0;">Password Recovery Assistance</p>
+            </div>
+            <div style="background-color: #FEF3C7; border: 1px solid #FCD34D; border-radius: 10px; padding: 22px; text-align: center; margin-bottom: 22px;">
+              <p style="color: #92400E; font-size: 13.5px; font-weight: 600; margin: 0 0 10px 0;">YOUR PASSWORD RESET CODE</p>
+              <div style="font-family: monospace; font-size: 36px; font-weight: 800; color: #B45309; letter-spacing: 8px; margin: 8px 0;">
+                ${otp}
+              </div>
+              <p style="color: #B45309; font-size: 12px; margin: 8px 0 0 0;">Expires in 10 minutes &bull; Single-use token</p>
+            </div>
+            <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 14px 0;">
+              Hello <strong>${name || 'User'}</strong>,<br/>
+              We received a request to reset your EvidenceLoop account password. Enter the 6-digit code above along with your new password to complete the reset.
+            </p>
+            <p style="color: #94A3B8; font-size: 11.5px; border-top: 1px solid #F1F5F9; padding-top: 14px; margin: 20px 0 0 0; text-align: center;">
+              If you did not request a password reset, you can safely ignore this email.
+            </p>
+          </div>
+        `,
+      });
+    } catch (err) {
+      console.warn(`[Password Reset Email Notice] Could not send email: ${err.message}.`);
+    }
+  }
+}
+
+export function createPasswordResetSession(user) {
+  const otp = crypto.randomInt(100000, 999999).toString();
+  const resetSessionToken = crypto.randomBytes(32).toString('hex');
+
+  const session = {
+    userId: String(user._id || user.id),
+    email: user.email,
+    name: user.name,
+    otp,
+    expiresAt: Date.now() + 10 * 60 * 1000,
+    attempts: 0,
+    maxAttempts: 5,
+  };
+
+  passwordResetSessions.set(resetSessionToken, session);
+  dispatchPasswordResetToAccount(user.email, otp, user.name);
+
+  const hasLiveEmail = Boolean(getMailTransporter());
+
+  return {
+    resetSessionToken,
+    expiresInSeconds: 600,
+    previewOtp: hasLiveEmail ? undefined : otp,
+  };
+}
+
+export function verifyPasswordResetOtp(resetSessionToken, submittedOtp) {
+  if (!resetSessionToken || !submittedOtp) {
+    return { valid: false, message: 'Reset session token and reset code are required' };
+  }
+
+  const session = passwordResetSessions.get(resetSessionToken);
+  if (!session) {
+    return { valid: false, message: 'Invalid or expired password reset session. Please request a new code.' };
+  }
+
+  if (Date.now() > session.expiresAt) {
+    passwordResetSessions.delete(resetSessionToken);
+    return { valid: false, message: 'Reset code has expired. Please request a new code.' };
+  }
+
+  session.attempts += 1;
+  if (session.attempts > session.maxAttempts) {
+    passwordResetSessions.delete(resetSessionToken);
+    return { valid: false, message: 'Maximum attempts exceeded. Please request a new code.' };
+  }
+
+  if (session.otp !== String(submittedOtp).trim()) {
+    const remaining = session.maxAttempts - session.attempts;
+    return { valid: false, message: `Incorrect reset code. ${remaining} attempt(s) remaining.` };
+  }
+
+  // Consume session
+  passwordResetSessions.delete(resetSessionToken);
+  return { valid: true, email: session.email };
 }
 
 export default {
@@ -221,4 +332,6 @@ export default {
   verifyOtp,
   resendOtp,
   dispatchOtpToAccount,
+  createPasswordResetSession,
+  verifyPasswordResetOtp,
 };
