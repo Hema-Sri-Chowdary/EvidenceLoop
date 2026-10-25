@@ -79,13 +79,13 @@ evidenceloop/
 ---
 
 
-## 3. Technology Stack (Strictly Minimal)
+## 3. Technology Stack 
 
 - **Frontend:**
   - **React 19**
-  - **Pure Vanilla CSS** (Handcrafted design system in `client/src/index.css`)
-  - **Native Fetch API** (No Axios)
-  - **Custom React SVG Icons** (No Lucide React)
+  - **Pure Vanilla CSS** 
+  - **Native Fetch API** 
+  - **Custom React SVG Icons** 
   - **React Router DOM v7**
 - **Backend:**
   - **Node.js**
