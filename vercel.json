@@ -25,9 +25,10 @@
       }
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": {
-        "service": "client"
+        "service": "client",
+        "path": "/index.html"
       }
     }
   ]
