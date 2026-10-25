@@ -88,9 +88,15 @@ export async function dispatchOtpToAccount(email, otp, name) {
     return;
   }
 
+  const authUser =
+    process.env.SMTP_USER ||
+    process.env.EMAIL_USER ||
+    process.env.GMAIL_USER ||
+    'hemasrichowdarykilaru@gmail.com';
+
   const fromAddress =
     process.env.EMAIL_FROM ||
-    `"EvidenceLoop Security" <${process.env.SMTP_USER || process.env.GMAIL_USER || 'security@evidenceloop.com'}>`;
+    `"EvidenceLoop Security" <${authUser}>`;
 
   const mailOptions = {
     from: fromAddress,
@@ -149,7 +155,7 @@ export async function dispatchPasswordResetToAccount(email, otp, name) {
 
   const fromAddress =
     process.env.EMAIL_FROM ||
-    `"EvidenceLoop Security" <${process.env.SMTP_USER || process.env.GMAIL_USER || 'security@evidenceloop.com'}>`;
+    `"EvidenceLoop Security" <${authUser}>`;
 
   const mailOptions = {
     from: fromAddress,

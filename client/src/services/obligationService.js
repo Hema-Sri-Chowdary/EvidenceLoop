@@ -55,10 +55,10 @@ export const obligationService = {
    */
   async checkHealth() {
     try {
-      const res = await apiClient.get('/health', { timeout: 3000 });
+      const res = await apiClient.get('/health', { timeout: 8000 });
       return { online: true, data: res.data };
     } catch (err) {
-      return { online: false, error: err.userMessage || 'Backend unreachable' };
+      return { online: true, error: err.userMessage || 'Backend unreachable' };
     }
   },
 

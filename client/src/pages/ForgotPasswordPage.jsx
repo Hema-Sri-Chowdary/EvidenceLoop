@@ -299,7 +299,7 @@ export function ForgotPasswordPage() {
                     marginBottom: 4,
                   }}
                 >
-                  6-Digit Reset Code (1 Digit Per Circle)
+                  Enter OTP
                 </label>
               </div>
 

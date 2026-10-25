@@ -228,7 +228,7 @@ export function OtpCirclesInput({
           </span>
         ) : (
           <span>
-            {filledCount > 0 ? `${filledCount} of ${length} digits entered` : `Enter ${length}-digit verification code`}
+            {filledCount > 0 ? `${filledCount} of ${length} digits entered` : 'Enter OTP'}
           </span>
         )}
       </div>

@@ -198,7 +198,7 @@ export function MfaPage() {
                 marginBottom: 4,
               }}
             >
-              Enter 6-Digit Code (1 Digit Per Circle)
+              Enter OTP
             </label>
           </div>
 

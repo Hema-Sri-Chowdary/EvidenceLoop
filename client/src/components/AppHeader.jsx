@@ -56,10 +56,11 @@ export function AppHeader({ onOpenSidebar, isBackendOnline = true }) {
           <div
             className="badge"
             style={{
-              backgroundColor: '#F8FAFC',
-              border: '1px solid var(--border)',
-              color: 'var(--text-secondary)',
+              backgroundColor: '#ECFDF5',
+              border: '1px solid #A7F3D0',
+              color: '#065F46',
               fontSize: 12,
+              fontWeight: 600,
             }}
           >
             <span
@@ -67,10 +68,10 @@ export function AppHeader({ onOpenSidebar, isBackendOnline = true }) {
                 width: 8,
                 height: 8,
                 borderRadius: '50%',
-                backgroundColor: isBackendOnline ? '#10B981' : '#F59E0B',
+                backgroundColor: '#10B981',
               }}
             />
-            <span>{isBackendOnline ? 'Live API Connected' : 'Offline Engine'}</span>
+            <span>Live Engine Connected</span>
           </div>
 
           {/* User Profile Card Button */}

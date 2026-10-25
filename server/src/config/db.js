@@ -19,9 +19,16 @@ const ATLAS_PRODUCTION_URI =
 
 let cachedPromise = null;
 
+let lastFailTime = 0;
+
 export async function connectDB() {
   if (mongoose.connection.readyState === 1) {
     return mongoose.connection;
+  }
+
+  // Backoff: If connection failed less than 30s ago, do not block or retry immediately
+  if (Date.now() - lastFailTime < 30000) {
+    return null;
   }
 
   if (cachedPromise) {
@@ -39,9 +46,9 @@ export async function connectDB() {
 
   try {
     cachedPromise = mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 6000,
-      connectTimeoutMS: 6000,
-      socketTimeoutMS: 15000,
+      serverSelectionTimeoutMS: 2000,
+      connectTimeoutMS: 2000,
+      socketTimeoutMS: 8000,
       bufferCommands: false,
     });
     const conn = await cachedPromise;
@@ -49,6 +56,7 @@ export async function connectDB() {
     return conn;
   } catch (error) {
     cachedPromise = null;
+    lastFailTime = Date.now();
     console.warn(`[Database Warning] Could not connect to MongoDB: ${error.message}`);
     console.warn(`[Database Notice] Operating in resilient memory/file fallback mode.`);
     return null;
