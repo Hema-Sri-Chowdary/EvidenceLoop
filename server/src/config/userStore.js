@@ -81,8 +81,8 @@ function saveUsersFile(users) {
     fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
     return true;
   } catch (err) {
-    console.error(`[UserStore Error] Failed to persist ${USERS_FILE}:`, err.message);
-    throw new Error(`Failed to persist user storage: ${err.message}`);
+    console.warn(`[UserStore Warning] Failed to persist ${USERS_FILE} (${err.code || err.message}). Fallback users maintained in memory.`);
+    return false;
   }
 }
 

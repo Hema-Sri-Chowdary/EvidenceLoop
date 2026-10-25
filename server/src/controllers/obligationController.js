@@ -32,7 +32,7 @@ function persistFallbackStore(records) {
   fallbackStore = records;
   const saved = saveFallbackData(records);
   if (!saved) {
-    throw new Error('Failed to persist obligation records to storage.');
+    console.warn('[ObligationStore Warning] Storage file persistence failed. Maintained in memory store.');
   }
 }
 

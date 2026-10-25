@@ -1,11 +1,17 @@
 import mongoose from 'mongoose';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-export const DATA_DIR = path.resolve(__dirname, '../../data');
+
+// In serverless environments (Vercel, AWS Lambda), /var/task is read-only; use os.tmpdir() (/tmp)
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT);
+export const DATA_DIR = isServerless
+  ? path.join(os.tmpdir(), 'evidenceloop-data')
+  : path.resolve(__dirname, '../../data');
 export const DATA_FILE = path.join(DATA_DIR, 'obligations.json');
 
 let isConnecting = false;
