@@ -142,8 +142,13 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// Connect to MongoDB & Start Server
+// Connect to MongoDB & Start Server (standalone server only)
 async function startServer() {
+  // In serverless environments (Vercel), skip port binding and process termination
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return;
+  }
+
   try {
     const conn = await connectDB();
     if (isProduction() && !conn) {
