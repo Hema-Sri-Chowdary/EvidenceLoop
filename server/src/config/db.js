@@ -23,6 +23,11 @@ const ATLAS_PRODUCTION_URI =
 
 let cachedPromise = null;
 let lastFailTime = 0;
+let lastError = null;
+
+export function getLastDbError() {
+  return lastError;
+}
 
 export async function connectDB() {
   if (mongoose.connection.readyState === 1) {
@@ -58,11 +63,13 @@ export async function connectDB() {
       maxPoolSize: 10,
     });
     const conn = await cachedPromise;
+    lastError = null;
     console.log(`[Database] MongoDB Atlas Connected: ${conn.connection.host}`);
     return conn;
   } catch (error) {
     cachedPromise = null;
     lastFailTime = Date.now();
+    lastError = error.message;
     console.error(`[Database Error] Could not connect to MongoDB Atlas: ${error.message}`);
     if (isProduction()) {
       console.error(`[Database Notice] MongoDB Atlas is mandatory in production. Local/memory fallbacks are prohibited.`);

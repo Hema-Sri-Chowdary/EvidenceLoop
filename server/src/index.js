@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { connectDB, isDbConnected, isProduction } from './config/db.js';
+import { connectDB, isDbConnected, isProduction, getLastDbError } from './config/db.js';
 import obligationRoutes from './routes/obligationRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import authRoutes from './routes/authRoutes.js';
@@ -92,6 +92,7 @@ app.get('/api/health', async (req, res) => {
     status: connected ? 'ok' : prod ? 'service_unavailable' : 'degraded',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
+    error: getLastDbError(),
     database: {
       connected,
       engine: connected ? 'MongoDB Atlas / Mongoose' : prod ? 'None (Atlas Required)' : 'Local File Fallback',
