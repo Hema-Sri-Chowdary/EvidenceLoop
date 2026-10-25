@@ -7,7 +7,7 @@ const RAW_API_URL = import.meta.env.VITE_API_URL || '/api';
 const API_BASE_URL = RAW_API_URL.replace(/\/+$/, '');
 
 async function request(endpoint, options = {}) {
-  const { params, body, timeout = 10000, ...customConfig } = options;
+  const { params, body, timeout = 15000, ...customConfig } = options;
 
   let url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 

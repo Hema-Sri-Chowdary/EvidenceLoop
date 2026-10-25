@@ -8,28 +8,47 @@ const __dirname = path.dirname(__filename);
 export const DATA_DIR = path.resolve(__dirname, '../../data');
 export const DATA_FILE = path.join(DATA_DIR, 'obligations.json');
 
+let isConnecting = false;
+
 export async function connectDB() {
   if (mongoose.connection.readyState === 1) {
     return mongoose.connection;
   }
-  if (mongoose.connection.readyState === 2) {
-    await new Promise((resolve) => mongoose.connection.once('connected', resolve));
-    return mongoose.connection;
+
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    console.warn('[Database Notice] No MONGODB_URI configured. Operating with file/memory storage.');
+    return null;
   }
 
-  const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/evidenceloop';
-  
+  if (isConnecting) {
+    // Wait at most 2 seconds for in-progress connection to avoid hanging requests
+    const start = Date.now();
+    while (mongoose.connection.readyState === 2 && Date.now() - start < 2000) {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    if (mongoose.connection.readyState === 1) {
+      return mongoose.connection;
+    }
+    return null;
+  }
+
+  isConnecting = true;
   try {
     const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 4000,
-      bufferCommands: false, // In serverless, fail fast if disconnected rather than hanging
+      serverSelectionTimeoutMS: 3000,
+      connectTimeoutMS: 3000,
+      socketTimeoutMS: 5000,
+      bufferCommands: false,
     });
     console.log(`[Database] MongoDB Connected: ${conn.connection.host}`);
     return conn;
   } catch (error) {
-    console.warn(`[Database Warning] Could not connect to MongoDB at ${uri}: ${error.message}`);
-    console.warn(`[Database Notice] Operating with predictable file-backed persistence at: ${DATA_FILE}`);
+    console.warn(`[Database Warning] Could not connect to MongoDB: ${error.message}`);
+    console.warn(`[Database Notice] Falling back to file/memory storage.`);
     return null;
+  } finally {
+    isConnecting = false;
   }
 }
 

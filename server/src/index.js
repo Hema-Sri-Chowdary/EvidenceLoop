@@ -78,19 +78,7 @@ app.use(
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// Ensure database connection is established on serverless cold starts
-app.use(async (req, res, next) => {
-  if (!isDbConnected() && process.env.MONGODB_URI) {
-    try {
-      await connectDB();
-    } catch (err) {
-      console.warn('[Serverless DB Middleware Notice]', err.message);
-    }
-  }
-  next();
-});
-
-// Health Check Endpoint
+// Immediate Health Check Endpoint (returns instantly without blocking on database)
 app.get('/api/health', (req, res) => {
   const connected = isDbConnected();
   res.json({
@@ -99,12 +87,24 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     database: {
       connected,
-      engine: connected ? 'MongoDB / Mongoose' : 'Persistent File Storage',
-      storage: connected ? 'mongodb' : 'file',
+      engine: connected ? 'MongoDB / Mongoose' : 'Persistent File / Memory Storage',
+      storage: connected ? 'mongodb' : 'fallback',
     },
     service: 'EvidenceLoop Audit Readiness API',
     version: '1.0.0',
   });
+});
+
+// Non-blocking database connection middleware for API requests
+app.use(async (req, res, next) => {
+  if (!isDbConnected() && process.env.MONGODB_URI) {
+    try {
+      await connectDB();
+    } catch (err) {
+      console.warn('[DB Middleware Notice]', err.message);
+    }
+  }
+  next();
 });
 
 // API Routes
@@ -118,8 +118,14 @@ app.use(errorHandler);
 
 // Connect to MongoDB & Start Server
 async function startServer() {
-  await connectDB();
-  await seedMongoUsersIfEmpty();
+  if (process.env.MONGODB_URI) {
+    try {
+      await connectDB();
+      await seedMongoUsersIfEmpty();
+    } catch (err) {
+      console.warn('[Startup DB Notice]', err.message);
+    }
+  }
 
   const server = app.listen(PORT, () => {
     console.log(`[EvidenceLoop API] Server running on http://localhost:${PORT}`);
@@ -138,11 +144,6 @@ async function startServer() {
   return server;
 }
 
-if (!process.env.VERCEL) {
-  startServer();
-} else {
-  // In Vercel serverless environment, initialize database without starting an HTTP listener
-  connectDB().then(seedMongoUsersIfEmpty).catch((err) => console.warn('[Vercel DB Init]', err.message));
-}
+startServer();
 
 export default app;
