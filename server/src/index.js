@@ -97,7 +97,7 @@ app.get('/api/health', (req, res) => {
 
 // Non-blocking database connection middleware for API requests
 app.use(async (req, res, next) => {
-  if (!isDbConnected() && process.env.MONGODB_URI) {
+  if (!isDbConnected()) {
     try {
       await connectDB();
     } catch (err) {
@@ -118,13 +118,11 @@ app.use(errorHandler);
 
 // Connect to MongoDB & Start Server
 async function startServer() {
-  if (process.env.MONGODB_URI) {
-    try {
-      await connectDB();
-      await seedMongoUsersIfEmpty();
-    } catch (err) {
-      console.warn('[Startup DB Notice]', err.message);
-    }
+  try {
+    await connectDB();
+    await seedMongoUsersIfEmpty();
+  } catch (err) {
+    console.warn('[Startup DB Notice]', err.message);
   }
 
   const server = app.listen(PORT, () => {
