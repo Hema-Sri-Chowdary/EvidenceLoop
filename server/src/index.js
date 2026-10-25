@@ -79,7 +79,12 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Health Check Endpoint
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+  if (!isDbConnected()) {
+    try {
+      await connectDB();
+    } catch {}
+  }
   const connected = isDbConnected();
   const prod = isProduction();
   const statusOk = connected || !prod;
