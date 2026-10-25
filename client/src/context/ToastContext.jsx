@@ -53,8 +53,8 @@ export function ToastProvider({ children }) {
                 {item.type === 'info' && <Info size={18} />}
               </div>
               <div style={{ flex: 1 }}>
-                <h4 style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>{item.title}</h4>
-                <p style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 2, lineHeight: 1.4 }}>
+                <h4 style={{ fontWeight: 700, fontSize: 14.5, color: 'var(--text-primary)' }}>{item.title}</h4>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 13.5, marginTop: 2, lineHeight: 1.45 }}>
                   {item.message}
                 </p>
               </div>

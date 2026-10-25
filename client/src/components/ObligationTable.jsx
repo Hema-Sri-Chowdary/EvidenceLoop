@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Edit3, Trash2, LinkIcon, Calendar } from './Icons.jsx';
 import StatusBadge from './StatusBadge.jsx';
 import { formatDate, formatDeadlineRelative } from '../utils/dateUtils.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export function ObligationTable({ obligations = [], onDeleteRequest }) {
   const navigate = useNavigate();
+  const { canMutate, canDelete } = useAuth();
 
   return (
     <div className="table-wrapper">
@@ -31,10 +33,10 @@ export function ObligationTable({ obligations = [], onDeleteRequest }) {
                 <tr key={item._id} onClick={() => navigate(`/obligations/${item._id}`)}>
                   {/* Title & Category */}
                   <td style={{ maxWidth: 320 }}>
-                    <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
                       {item.title}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-secondary)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--text-secondary)' }}>
                       <span className="badge badge-low badge-sm" style={{ backgroundColor: '#F1F5F9' }}>
                         {item.category}
                       </span>
@@ -59,7 +61,7 @@ export function ObligationTable({ obligations = [], onDeleteRequest }) {
                     <div style={{ fontWeight: 500 }}>{formatDate(item.dueDate)}</div>
                     <div
                       style={{
-                        fontSize: 11,
+                        fontSize: 12.5,
                         fontWeight: 600,
                         marginTop: 2,
                         color: readiness.overdue
@@ -94,7 +96,7 @@ export function ObligationTable({ obligations = [], onDeleteRequest }) {
                     ) : readiness.dueSoon ? (
                       <StatusBadge type="readiness" value="dueSoon" />
                     ) : (
-                      <span style={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: 12 }}>
+                      <span style={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: 13.5 }}>
                         On Track
                       </span>
                     )}
@@ -114,22 +116,26 @@ export function ObligationTable({ obligations = [], onDeleteRequest }) {
                       >
                         <Eye size={16} />
                       </button>
-                      <button
-                        onClick={() => navigate(`/obligations/${item._id}/edit`)}
-                        className="btn-icon"
-                        title="Edit Obligation"
-                        aria-label={`Edit ${item.title}`}
-                      >
-                        <Edit3 size={16} />
-                      </button>
-                      <button
-                        onClick={() => onDeleteRequest(item)}
-                        className="btn-icon danger"
-                        title="Delete Obligation"
-                        aria-label={`Delete ${item.title}`}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {canMutate && (
+                        <button
+                          onClick={() => navigate(`/obligations/${item._id}/edit`)}
+                          className="btn-icon"
+                          title="Edit Obligation"
+                          aria-label={`Edit ${item.title}`}
+                        >
+                          <Edit3 size={16} />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => onDeleteRequest(item)}
+                          className="btn-icon danger"
+                          title="Delete Obligation"
+                          aria-label={`Delete ${item.title}`}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

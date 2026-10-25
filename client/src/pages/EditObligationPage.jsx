@@ -89,7 +89,7 @@ export function EditObligationPage() {
       />
 
       {saveError && (
-        <div style={{ padding: '12px 16px', borderRadius: 8, backgroundColor: 'var(--overdue-bg)', border: '1px solid var(--overdue-border)', color: 'var(--overdue-text)', fontSize: 13 }}>
+        <div style={{ padding: '12px 16px', borderRadius: 8, backgroundColor: 'var(--overdue-bg)', border: '1px solid var(--overdue-border)', color: 'var(--overdue-text)', fontSize: 14.5 }}>
           <strong>Error updating obligation:</strong> {saveError}
         </div>
       )}

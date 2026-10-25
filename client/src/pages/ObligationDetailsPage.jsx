@@ -18,11 +18,13 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { obligationService } from '../services/obligationService.js';
 import { formatDate, formatDeadlineRelative } from '../utils/dateUtils.js';
 import { useToast } from '../context/ToastContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export function ObligationDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const { canMutate, canDelete } = useAuth();
 
   const [obligation, setObligation] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -110,14 +112,18 @@ export function ObligationDetailsPage() {
               <ArrowLeft size={16} />
               <span>Back</span>
             </button>
-            <button onClick={() => navigate(`/obligations/${id}/edit`)} className="btn btn-secondary">
-              <Edit3 size={15} style={{ color: 'var(--text-secondary)' }} />
-              <span>Edit</span>
-            </button>
-            <button onClick={() => setShowDeleteConfirm(true)} className="btn btn-outline-danger">
-              <Trash2 size={15} />
-              <span>Delete</span>
-            </button>
+            {canMutate && (
+              <button onClick={() => navigate(`/obligations/${id}/edit`)} className="btn btn-secondary">
+                <Edit3 size={15} style={{ color: 'var(--text-secondary)' }} />
+                <span>Edit</span>
+              </button>
+            )}
+            {canDelete && (
+              <button onClick={() => setShowDeleteConfirm(true)} className="btn btn-outline-danger">
+                <Trash2 size={15} />
+                <span>Delete</span>
+              </button>
+            )}
           </div>
         }
       />
@@ -129,10 +135,10 @@ export function ObligationDetailsPage() {
           {/* Metadata Overview Card */}
           <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div>
-              <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)' }}>
+              <span style={{ fontSize: 12.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)' }}>
                 Description & Control Objectives
               </span>
-              <p style={{ marginTop: 6, fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+              <p style={{ marginTop: 8, fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
                 {obligation.description || 'No detailed scope or procedural description specified for this obligation.'}
               </p>
             </div>
@@ -148,36 +154,36 @@ export function ObligationDetailsPage() {
               }}
             >
               <div>
-                <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <User size={13} style={{ color: 'var(--text-muted)' }} />
+                <span style={{ fontSize: 12.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <User size={14} style={{ color: 'var(--text-muted)' }} />
                   <span>Responsible Owner</span>
                 </span>
-                <p style={{ marginTop: 4, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                <p style={{ marginTop: 6, fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
                   {obligation.owner}
                 </p>
               </div>
 
               <div>
-                <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Tag size={13} style={{ color: 'var(--text-muted)' }} />
+                <span style={{ fontSize: 12.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Tag size={14} style={{ color: 'var(--text-muted)' }} />
                   <span>Category</span>
                 </span>
-                <p style={{ marginTop: 4, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                <p style={{ marginTop: 6, fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
                   {obligation.category}
                 </p>
               </div>
 
               <div>
-                <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Calendar size={13} style={{ color: 'var(--text-muted)' }} />
+                <span style={{ fontSize: 12.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
                   <span>Deadline</span>
                 </span>
-                <p style={{ marginTop: 4, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                <p style={{ marginTop: 6, fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
                   {formatDate(obligation.dueDate)}
                 </p>
                 <p
                   style={{
-                    fontSize: 11,
+                    fontSize: 12.5,
                     marginTop: 2,
                     fontWeight: 600,
                     color: readiness.overdue
@@ -197,7 +203,7 @@ export function ObligationDetailsPage() {
           <EvidenceList
             evidence={obligation.evidence || []}
             evidenceRequired={obligation.evidenceRequired}
-            onAddEvidence={handleAddEvidence}
+            onAddEvidence={canMutate ? handleAddEvidence : null}
             isAdding={isAddingEvidence}
           />
         </div>

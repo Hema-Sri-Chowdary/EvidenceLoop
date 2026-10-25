@@ -59,15 +59,15 @@ export function StatCard({
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)' }}>
+          <p style={{ fontSize: 12.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)' }}>
             {title}
           </p>
           <div style={{ marginTop: 8, display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <span style={{ fontSize: 30, fontWeight: 800, color: valueColors[variant] || valueColors.default }}>
+            <span style={{ fontSize: 32, fontWeight: 800, color: valueColors[variant] || valueColors.default }}>
               {value}
             </span>
           </div>
-          {subtext && <p style={{ marginTop: 4, fontSize: 12, color: 'var(--text-secondary)' }}>{subtext}</p>}
+          {subtext && <p style={{ marginTop: 4, fontSize: 13.5, color: 'var(--text-secondary)' }}>{subtext}</p>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           {Icon && (

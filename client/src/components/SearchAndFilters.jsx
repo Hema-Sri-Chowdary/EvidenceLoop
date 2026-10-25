@@ -61,7 +61,7 @@ export function SearchAndFilters({ filters, onChange, onReset, totalResults }) {
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13, color: 'var(--text-secondary)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: 'var(--text-secondary)' }}>
           <span>
             Showing <strong style={{ color: 'var(--text-primary)' }}>{totalResults}</strong> obligation
             {totalResults === 1 ? '' : 's'}
@@ -72,7 +72,7 @@ export function SearchAndFilters({ filters, onChange, onReset, totalResults }) {
               className="btn btn-secondary btn-sm"
               style={{ color: 'var(--teal-action)' }}
             >
-              <RotateCcw size={12} />
+              <RotateCcw size={13} />
               <span>Reset filters</span>
             </button>
           )}
@@ -91,14 +91,14 @@ export function SearchAndFilters({ filters, onChange, onReset, totalResults }) {
       >
         {/* Work Status */}
         <div>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+          <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
             Status
           </label>
           <select
             value={filters.status}
             onChange={(e) => onChange('status', e.target.value)}
             className="form-select"
-            style={{ height: 36, fontSize: 12 }}
+            style={{ height: 38, fontSize: 13.5 }}
           >
             <option value="All">All Statuses</option>
             <option value="Open">Open</option>
@@ -109,14 +109,14 @@ export function SearchAndFilters({ filters, onChange, onReset, totalResults }) {
 
         {/* Priority */}
         <div>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+          <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
             Priority
           </label>
           <select
             value={filters.priority}
             onChange={(e) => onChange('priority', e.target.value)}
             className="form-select"
-            style={{ height: 36, fontSize: 12 }}
+            style={{ height: 38, fontSize: 13.5 }}
           >
             <option value="All">All Priorities</option>
             <option value="Critical">Critical</option>
@@ -128,14 +128,14 @@ export function SearchAndFilters({ filters, onChange, onReset, totalResults }) {
 
         {/* Evidence Status */}
         <div>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+          <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
             Evidence Status
           </label>
           <select
             value={filters.evidenceStatus}
             onChange={(e) => onChange('evidenceStatus', e.target.value)}
             className="form-select"
-            style={{ height: 36, fontSize: 12 }}
+            style={{ height: 38, fontSize: 13.5 }}
           >
             <option value="All">All Requirements</option>
             <option value="Missing Evidence">Missing Evidence</option>
@@ -147,7 +147,7 @@ export function SearchAndFilters({ filters, onChange, onReset, totalResults }) {
 
         {/* Sort */}
         <div>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+          <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
             Sort By
           </label>
           <select
@@ -158,7 +158,7 @@ export function SearchAndFilters({ filters, onChange, onReset, totalResults }) {
               onChange('order', order);
             }}
             className="form-select"
-            style={{ height: 36, fontSize: 12 }}
+            style={{ height: 38, fontSize: 13.5 }}
           >
             <option value="dueDate-asc">Deadline (Earliest First)</option>
             <option value="dueDate-desc">Deadline (Furthest First)</option>

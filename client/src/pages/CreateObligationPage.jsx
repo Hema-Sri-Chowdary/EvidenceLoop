@@ -47,7 +47,7 @@ export function CreateObligationPage() {
       />
 
       {saveError && (
-        <div style={{ padding: '12px 16px', borderRadius: 8, backgroundColor: 'var(--overdue-bg)', border: '1px solid var(--overdue-border)', color: 'var(--overdue-text)', fontSize: 13 }}>
+        <div style={{ padding: '12px 16px', borderRadius: 8, backgroundColor: 'var(--overdue-bg)', border: '1px solid var(--overdue-border)', color: 'var(--overdue-text)', fontSize: 14.5 }}>
           <strong>Error saving obligation:</strong> {saveError}
         </div>
       )}

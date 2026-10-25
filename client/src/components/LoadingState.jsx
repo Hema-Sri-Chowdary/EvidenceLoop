@@ -19,8 +19,8 @@ export function LoadingState({ message = 'Loading obligations and audit readines
       >
         <Loader2 size={24} />
       </div>
-      <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{message}</h3>
-      <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>Evaluating audit compliance rules</p>
+      <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{message}</h3>
+      <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginTop: 4 }}>Evaluating audit compliance rules</p>
     </div>
   );
 }

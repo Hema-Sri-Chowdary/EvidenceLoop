@@ -25,19 +25,8 @@ export function ProfilePage() {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     org: user?.org || '',
-    role: role || user?.role || 'Viewer',
   });
   const [isSaving, setIsSaving] = useState(false);
-
-  const isInstitutional = (email) => {
-    const clean = (email || '').trim().toLowerCase();
-    return (
-      clean.includes('@vit') ||
-      clean.includes('.vit.') ||
-      clean.includes('@vcomply') ||
-      clean.includes('.vcomply.')
-    );
-  };
 
   // Delete account confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -72,7 +61,7 @@ export function ProfilePage() {
           border: '#CBD5E1',
           color: '#475569',
           tag: 'Compliance Observer (Viewer)',
-          desc: 'Read-only observation across obligations, dashboards, and audit readiness reports.',
+          desc: 'Assigned to general email domains. Read-only observation across obligations, dashboards, and audit readiness reports.',
         };
     }
   };
@@ -97,7 +86,6 @@ export function ProfilePage() {
       await updateProfile({
         name: formData.name.trim(),
         org: formData.org.trim(),
-        role: isInstitutional(user.email) ? formData.role : 'Viewer',
       });
       toast.success('Profile updated successfully');
       setIsEditing(false);
@@ -193,7 +181,7 @@ export function ProfilePage() {
                 {!isEditing && (
                   <button
                     onClick={() => {
-                      setFormData({ name: user.name, org: user.org || '', role: role || user.role || 'Viewer' });
+                      setFormData({ name: user.name, org: user.org || '' });
                       setIsEditing(true);
                     }}
                     className="btn btn-sm"
@@ -259,34 +247,6 @@ export function ProfilePage() {
                   placeholder="Enter organization / university"
                 />
               </div>
-
-              {isInstitutional(user.email) && (
-                <div>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 8 }}>
-                    Institutional Account Role (@vit / @vcomply)
-                  </label>
-                  <div style={{ display: 'flex', gap: 20 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#1E293B' }}>
-                      <input
-                        type="radio"
-                        name="profileRoleSelect"
-                        checked={formData.role === 'Auditor'}
-                        onChange={() => setFormData({ ...formData, role: 'Auditor' })}
-                      />
-                      <span>Auditor (Full create, edit &amp; delete)</span>
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#1E293B' }}>
-                      <input
-                        type="radio"
-                        name="profileRoleSelect"
-                        checked={formData.role === 'Viewer'}
-                        onChange={() => setFormData({ ...formData, role: 'Viewer' })}
-                      />
-                      <span>Viewer (Read-only observer)</span>
-                    </label>
-                  </div>
-                </div>
-              )}
 
               <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 10 }}>
                 <button

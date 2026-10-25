@@ -152,7 +152,7 @@ export function ObligationForm({
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* General Obligation Details Card */}
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
           Obligation Definition
         </h3>
 
@@ -284,13 +284,13 @@ export function ObligationForm({
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
           <div>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Evidence Configuration</h3>
-            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Evidence Configuration</h3>
+            <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginTop: 2 }}>
               Specify whether internal auditors require documented proof to consider this ready.
             </p>
           </div>
           {/* Custom Checkbox Toggle */}
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>
             <input
               type="checkbox"
               checked={formData.evidenceRequired}
@@ -302,9 +302,9 @@ export function ObligationForm({
         </div>
 
         {formData.evidenceRequired && (
-          <div style={{ padding: '12px 14px', borderRadius: 8, backgroundColor: 'var(--missing-bg)', border: '1px solid var(--missing-border)', color: 'var(--missing-text)', fontSize: 12, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ padding: '12px 14px', borderRadius: 8, backgroundColor: 'var(--missing-bg)', border: '1px solid var(--missing-border)', color: 'var(--missing-text)', fontSize: 13, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
             <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
-            <div style={{ lineHeight: 1.4 }}>
+            <div style={{ lineHeight: 1.45 }}>
               <strong>Audit Readiness Rule:</strong> Even if this obligation is marked <em>Completed</em>, it will be flagged as an <strong>Unresolved Readiness Gap</strong> until at least one supporting evidence link is attached.
             </div>
           </div>
@@ -312,12 +312,12 @@ export function ObligationForm({
 
         {/* Existing Attached Evidence */}
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
+          <label style={{ display: 'block', fontSize: 13.5, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
             Attached Evidence Links ({formData.evidence.length})
           </label>
 
           {formData.evidence.length === 0 ? (
-            <p style={{ fontSize: 12, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '8px 0' }}>
+            <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '8px 0' }}>
               No evidence links attached yet. You can attach links now or add them later from the obligation details page.
             </p>
           ) : (
@@ -333,7 +333,7 @@ export function ObligationForm({
                     borderRadius: 6,
                     backgroundColor: '#FFFFFF',
                     border: '1px solid var(--border)',
-                    fontSize: 12,
+                    fontSize: 13.5,
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
@@ -360,7 +360,7 @@ export function ObligationForm({
 
         {/* Inline Add Evidence Link Section */}
         <div style={{ paddingTop: 8 }}>
-          <span style={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8 }}>
+          <span style={{ display: 'block', fontSize: 12.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: 8 }}>
             Attach Link Now
           </span>
           {evidenceError && (
@@ -376,7 +376,7 @@ export function ObligationForm({
               onChange={(e) => setNewEvidenceLabel(e.target.value)}
               placeholder="Label (e.g. Q3 SOC2 Report PDF)"
               className="form-input"
-              style={{ flex: 1, minWidth: 200, height: 36, fontSize: 12 }}
+              style={{ flex: 1, minWidth: 200, height: 38, fontSize: 13.5 }}
             />
             <input
               type="url"
@@ -384,13 +384,13 @@ export function ObligationForm({
               onChange={(e) => setNewEvidenceUrl(e.target.value)}
               placeholder="URL (https://...)"
               className="form-input"
-              style={{ flex: 1, minWidth: 200, height: 36, fontSize: 12 }}
+              style={{ flex: 1, minWidth: 200, height: 38, fontSize: 13.5 }}
             />
             <button
               type="button"
               onClick={handleAddEvidenceRow}
               className="btn btn-secondary btn-sm"
-              style={{ height: 36 }}
+              style={{ height: 38 }}
             >
               + Add Link
             </button>

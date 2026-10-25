@@ -71,8 +71,8 @@ export function AuthProvider({ children }) {
     return authService.register(payload);
   }, []);
 
-  const updateProfile = useCallback(async ({ name, org, role }) => {
-    const data = await authService.updateProfile({ name, org, role });
+  const updateProfile = useCallback(async ({ name, org }) => {
+    const data = await authService.updateProfile({ name, org });
     if (data.user) {
       setUser(data.user);
     }
