@@ -77,8 +77,8 @@ export const authService = {
   /**
    * Register a new user account
    */
-  async register({ name, email, password, org }) {
-    const res = await apiClient.post('/auth/register', { name, email, password, org });
+  async register({ name, email, password, org, role }) {
+    const res = await apiClient.post('/auth/register', { name, email, password, org, role });
     return res.data;
   },
 
@@ -94,10 +94,10 @@ export const authService = {
   },
 
   /**
-   * Update authenticated user's profile (name & org)
+   * Update authenticated user's profile (name, org, and role if eligible)
    */
-  async updateProfile({ name, org }) {
-    const res = await apiClient.put('/auth/me', { name, org });
+  async updateProfile({ name, org, role }) {
+    const res = await apiClient.put('/auth/me', { name, org, role });
     if (res.data && res.data.user) {
       this.setUser(res.data.user);
     }

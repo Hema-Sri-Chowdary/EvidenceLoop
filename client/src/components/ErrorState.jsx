@@ -35,8 +35,8 @@ export function ErrorState({
       >
         <AlertCircle size={26} />
       </div>
-      <h3 style={{ fontSize: 17.5, fontWeight: 700, color: 'var(--overdue-text)' }}>{title}</h3>
-      <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', maxWidth: 440, marginTop: 6, lineHeight: 1.55 }}>
+      <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--overdue-text)' }}>{title}</h3>
+      <p style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 440, marginTop: 6, lineHeight: 1.5 }}>
         {message}
       </p>
 

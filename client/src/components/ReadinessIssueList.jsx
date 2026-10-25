@@ -35,7 +35,7 @@ export function ReadinessIssueList({ readiness, obligation }) {
           <Icon size={20} />
         </div>
         <div>
-          <h4 style={{ fontSize: 15.5, fontWeight: 700 }}>
+          <h4 style={{ fontSize: 14, fontWeight: 700 }}>
             {hasGap
               ? 'Readiness Gap Detected'
               : readyForReview
@@ -44,7 +44,7 @@ export function ReadinessIssueList({ readiness, obligation }) {
               ? 'Upcoming Deadline Warning'
               : 'Audit Status: On Track'}
           </h4>
-          <p style={{ fontSize: 13.5, marginTop: 4, lineHeight: 1.45, opacity: 0.9 }}>
+          <p style={{ fontSize: 12, marginTop: 4, lineHeight: 1.4, opacity: 0.9 }}>
             {hasGap
               ? 'This obligation has one or more unresolved compliance gaps that prevent audit sign-off.'
               : readyForReview
@@ -59,7 +59,7 @@ export function ReadinessIssueList({ readiness, obligation }) {
       {/* Audit Readiness Explanations & Reasons */}
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <h4 style={{ fontSize: 12.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)' }}>
+          <h4 style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)' }}>
             Readiness Diagnosis & Explanations
           </h4>
           <ul style={{ marginTop: 10, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -70,12 +70,12 @@ export function ReadinessIssueList({ readiness, obligation }) {
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: 10,
-                  fontSize: 13.5,
+                  fontSize: 12,
                   padding: '10px 12px',
                   borderRadius: 8,
                   backgroundColor: '#F8FAFC',
                   border: '1px solid var(--border)',
-                  lineHeight: 1.45,
+                  lineHeight: 1.4,
                 }}
               >
                 <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--teal-action)', marginTop: 6, flexShrink: 0 }} />
@@ -88,7 +88,7 @@ export function ReadinessIssueList({ readiness, obligation }) {
         {/* Suggested Next Action */}
         {nextAction && (
           <div style={{ paddingTop: 14, borderTop: '1px solid var(--border)' }}>
-            <span style={{ fontSize: 12.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)' }}>
               Recommended Next Action
             </span>
             <div
@@ -97,7 +97,7 @@ export function ReadinessIssueList({ readiness, obligation }) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                fontSize: 13.5,
+                fontSize: 12,
                 fontWeight: 600,
                 color: 'var(--teal-action)',
                 backgroundColor: 'var(--teal-subtle)',
@@ -113,7 +113,7 @@ export function ReadinessIssueList({ readiness, obligation }) {
         )}
 
         {/* Guidance Note */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--text-secondary)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-secondary)' }}>
           <HelpCircle size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
           <span>Readiness status indicates required evidence is linked; it does not constitute certification.</span>
         </div>

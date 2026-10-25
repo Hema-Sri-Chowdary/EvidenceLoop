@@ -56,10 +56,10 @@ export function ConfirmDialog({
             <AlertTriangle size={24} />
           </div>
           <div style={{ flex: 1 }}>
-            <h3 id="dialog-title" style={{ fontSize: 17.5, fontWeight: 700, color: 'var(--text-primary)' }}>
+            <h3 id="dialog-title" style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>
               {title}
             </h3>
-            <p id="dialog-description" style={{ marginTop: 8, fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+            <p id="dialog-description" style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               {message}
             </p>
           </div>

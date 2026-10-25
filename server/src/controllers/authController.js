@@ -9,6 +9,7 @@ import {
   updateUserPassword,
   determineRoleByEmail,
   determineOrgByEmail,
+  isInstitutionalEmail,
   DEFAULT_USERS,
 } from '../config/userStore.js';
 import {
@@ -72,9 +73,12 @@ export async function login(req, res, next) {
       });
     }
 
-    // Role assignment strictly derived server-side
-    const enforcedRole = determineRoleByEmail(cleanEmail);
-    user.role = enforcedRole;
+    // Role check: non-institutional accounts are strictly Viewer. Institutional accounts preserve their chosen role.
+    if (!isInstitutionalEmail(cleanEmail)) {
+      user.role = 'Viewer';
+    } else if (!user.role) {
+      user.role = 'Auditor';
+    }
     user.org = determineOrgByEmail(cleanEmail, user.org);
 
     // Step 2: Trigger Real-Time Multi-Factor Authentication via OTP (awaited & error handled)
@@ -132,8 +136,12 @@ export async function verifyMfa(req, res, next) {
       });
     }
 
-    // Ensure role and org are guaranteed up to date (Auditor or Viewer)
-    result.user.role = determineRoleByEmail(result.user.email);
+    // Preserve user's chosen role if institutional (@vit / @vcomply); enforce Viewer for non-institutional
+    if (!isInstitutionalEmail(result.user.email)) {
+      result.user.role = 'Viewer';
+    } else if (!result.user.role) {
+      result.user.role = 'Auditor';
+    }
     result.user.org = determineOrgByEmail(result.user.email, result.user.org);
 
     // Issue JWT token
@@ -219,11 +227,14 @@ export async function register(req, res, next) {
       });
     }
 
-    // Role sent by browser is ignored; strictly evaluated on server
+    // Institutional domains (@vit / @vcomply) can select Auditor or Viewer; all others are Viewer
+    const assignedRole = determineRoleByEmail(cleanEmail, role);
+
     const user = await createUser({
       name,
       email: cleanEmail,
       password,
+      role: assignedRole,
       org: org ? org.trim() : undefined,
     });
 
@@ -271,7 +282,7 @@ export async function getMe(req, res, next) {
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
-    const properRole = determineRoleByEmail(user.email);
+    const properRole = isInstitutionalEmail(user.email) ? (user.role || 'Auditor') : 'Viewer';
     const properOrg = determineOrgByEmail(user.email, user.org);
 
     return res.json({
@@ -296,19 +307,16 @@ export async function getMe(req, res, next) {
 export async function updateProfile(req, res, next) {
   try {
     const userId = req.user.id;
-    const { name, org } = req.body;
+    const { name, org, role } = req.body;
 
     if (!name || name.trim().length < 2) {
       return res.status(400).json({ success: false, message: 'Name must be at least 2 characters' });
     }
 
-    const updated = await updateUserProfile(userId, { name, org });
+    const updated = await updateUserProfile(userId, { name, org, role });
     if (!updated) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
-
-    // Role remains strictly tied to the email rule (Auditor / Viewer)
-    updated.role = determineRoleByEmail(updated.email);
 
     return res.json({
       success: true,

@@ -1,41 +1,28 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, CheckSquare, PlusCircle, ShieldAlert, X, Database, User } from './Icons.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
+import { LayoutDashboard, CheckSquare, PlusCircle, ShieldAlert, X, Database } from './Icons.jsx';
 
 export function AppSidebar({ isOpen, onClose, onResetDemo }) {
-  const { canMutate, canDelete, role } = useAuth();
-
   const navItems = [
     {
       label: 'Dashboard',
       to: '/',
       icon: LayoutDashboard,
       end: true,
-      visible: true,
     },
     {
       label: 'Obligations Register',
       to: '/obligations',
       icon: CheckSquare,
       end: false,
-      visible: true,
     },
     {
       label: 'Create Obligation',
       to: '/obligations/new',
       icon: PlusCircle,
       end: false,
-      visible: canMutate,
     },
-    {
-      label: 'User Profile',
-      to: '/profile',
-      icon: User,
-      end: false,
-      visible: true,
-    },
-  ].filter((item) => item.visible);
+  ];
 
   return (
     <>
@@ -109,7 +96,7 @@ export function AppSidebar({ isOpen, onClose, onResetDemo }) {
           <p className="sidebar-audit-desc">
             Evidence is strictly required. Tasks marked completed without proof remain flagged.
           </p>
-          {onResetDemo && canDelete && (
+          {onResetDemo && (
             <button
               onClick={onResetDemo}
               className="btn btn-secondary btn-sm"
@@ -130,7 +117,7 @@ export function AppSidebar({ isOpen, onClose, onResetDemo }) {
         {/* Footer info */}
         <div className="sidebar-footer">
           <span>Enterprise MERN</span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#34d399', fontSize: 12.5, fontWeight: 600 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#34d399', fontSize: 11, fontWeight: 600 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#34d399' }} />
             System Live
           </span>

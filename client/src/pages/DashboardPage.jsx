@@ -169,17 +169,17 @@ export function DashboardPage() {
       <section aria-label="Audit Readiness Summary" className="card">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, paddingBottom: 16 }}>
           <div>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
               <ShieldAlert size={18} style={{ color: 'var(--teal-action)' }} />
               <span>Overall Audit Readiness Stance</span>
             </h3>
-            <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginTop: 2 }}>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
               Readiness requires both task completion and linked supporting proof.
             </p>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <span style={{ fontSize: 28, fontWeight: 800, color: 'var(--teal-action)' }}>{readinessPercent}%</span>
-            <span style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginLeft: 6 }}>
+            <span style={{ fontSize: 26, fontWeight: 800, color: 'var(--teal-action)' }}>{readinessPercent}%</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 6 }}>
               audit ready ({readyForReview}/{total})
             </span>
           </div>
@@ -202,7 +202,7 @@ export function DashboardPage() {
         </div>
 
         {/* Legend */}
-        <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, fontSize: 13.5, color: 'var(--text-secondary)', paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+        <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, fontSize: 12, color: 'var(--text-secondary)', paddingTop: 12, borderTop: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: 'var(--ready-text)' }} />
             <span>Ready for Review: <strong style={{ color: 'var(--text-primary)' }}>{readyForReview}</strong></span>
@@ -228,11 +228,11 @@ export function DashboardPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, gridColumn: 'span 2' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <AlertCircle size={18} style={{ color: 'var(--overdue-text)' }} />
                 <span>Prioritized Needs Attention Queue</span>
               </h3>
-              <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginTop: 2 }}>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
                 Urgent compliance gaps ranked by priority and risk
               </p>
             </div>
@@ -249,8 +249,8 @@ export function DashboardPage() {
           {needsAttentionQueue.length === 0 ? (
             <div className="card" style={{ padding: 36, textAlign: 'center' }}>
               <CheckCircle2 size={32} style={{ color: 'var(--ready-text)', margin: '0 auto 8px', display: 'block' }} />
-              <h4 style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text-primary)' }}>No Active Audit Gaps</h4>
-              <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', maxWidth: 400, margin: '6px auto 0' }}>
+              <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>No Active Audit Gaps</h4>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', maxWidth: 400, margin: '6px auto 0' }}>
                 Excellent! There are currently no overdue obligations or missing evidence requirements in the workspace.
               </p>
             </div>
@@ -277,7 +277,7 @@ export function DashboardPage() {
                           <StatusBadge type="priority" value={item.priority} size="sm" />
                           <StatusBadge type="workStatus" value={item.status} size="sm" />
                         </div>
-                        <h4 style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <h4 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {item.title}
                         </h4>
                       </div>
@@ -290,7 +290,7 @@ export function DashboardPage() {
                     </div>
 
                     {/* Action Needed Callout */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13.5, paddingTop: 8, marginTop: 8, borderTop: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, paddingTop: 8, marginTop: 8, borderTop: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}>
                       <span>Owner: <strong style={{ color: 'var(--text-primary)' }}>{item.owner}</strong></span>
                       <span style={{ color: 'var(--teal-action)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                         <span>{readiness.nextAction}</span>
@@ -307,16 +307,16 @@ export function DashboardPage() {
         {/* Upcoming Deadlines */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
               <Calendar size={18} style={{ color: 'var(--due-soon-text)' }} />
               <span>Upcoming Deadlines</span>
             </h3>
-            <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginTop: 2 }}>Active obligations approaching due date</p>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>Active obligations approaching due date</p>
           </div>
 
           <div className="card" style={{ padding: 16 }}>
             {upcomingDeadlines.length === 0 ? (
-              <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '24px 0', textAlign: 'center' }}>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', fontStyle: 'italic', padding: '24px 0', textAlign: 'center' }}>
                 No active obligations due in the near term.
               </p>
             ) : (
@@ -334,12 +334,12 @@ export function DashboardPage() {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                      <h5 style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <h5 style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {item.title}
                       </h5>
                       <StatusBadge type="priority" value={item.priority} size="sm" />
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, fontSize: 12.5, color: 'var(--text-secondary)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, fontSize: 11, color: 'var(--text-secondary)' }}>
                       <span>{item.owner}</span>
                       <span style={{ fontWeight: 600, color: 'var(--due-soon-text)' }}>
                         {formatDeadlineRelative(item.dueDate, false)}

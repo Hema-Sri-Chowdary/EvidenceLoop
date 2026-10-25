@@ -11,21 +11,29 @@ const __dirname = path.dirname(__filename);
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
 /**
- * Server-Enforced Role Assignment Rules:
- * - Strictly two roles: 'Auditor' and 'Viewer' (Admin role removed entirely)
- * - Users with '@vit' or '@vcomply' domains are assigned 'Auditor'
- * - All other accounts are assigned 'Viewer'
- * - Roles sent by the browser are strictly ignored
+ * Check if an email belongs to an institutional domain (@vit or @vcomply)
  */
-export function determineRoleByEmail(email) {
-  if (!email || typeof email !== 'string') return 'Viewer';
+export function isInstitutionalEmail(email) {
+  if (!email || typeof email !== 'string') return false;
   const clean = email.trim().toLowerCase();
-  if (
+  return (
     clean.includes('@vit') ||
     clean.includes('.vit.') ||
     clean.includes('@vcomply') ||
     clean.includes('.vcomply.')
-  ) {
+  );
+}
+
+/**
+ * Role Assignment Rules:
+ * - Users with '@vit' or '@vcomply' domains can choose either 'Auditor' or 'Viewer' (defaults to 'Auditor')
+ * - All other email domains are strictly assigned 'Viewer'
+ */
+export function determineRoleByEmail(email, requestedRole) {
+  if (!email || typeof email !== 'string') return 'Viewer';
+  const clean = email.trim().toLowerCase();
+  if (isInstitutionalEmail(clean)) {
+    if (requestedRole === 'Viewer') return 'Viewer';
     return 'Auditor';
   }
   return 'Viewer';
@@ -118,7 +126,7 @@ export async function seedMongoUsersIfEmpty() {
           name: u.name,
           email: cleanEmail,
           password: u.passwordRaw,
-          role: determineRoleByEmail(cleanEmail),
+          role: determineRoleByEmail(cleanEmail, u.role),
           org: determineOrgByEmail(cleanEmail, u.org),
           mfaEnabled: u.mfaEnabled,
         });
@@ -131,13 +139,12 @@ export async function seedMongoUsersIfEmpty() {
 
 export async function findUserByEmail(email) {
   const cleanEmail = email.trim().toLowerCase();
-  const properRole = determineRoleByEmail(cleanEmail);
 
   if (isDbConnected()) {
     const user = await User.findOne({ email: cleanEmail });
     if (user) {
-      if (user.role !== properRole) {
-        user.role = properRole;
+      if (!isInstitutionalEmail(user.email) && user.role !== 'Viewer') {
+        user.role = 'Viewer';
         await user.save();
       }
     }
@@ -155,9 +162,8 @@ export async function findUserByEmail(email) {
   const found = fallbackUsers.find((u) => u.email === cleanEmail);
   if (!found) return null;
 
-  // Enforce role
-  if (found.role !== properRole) {
-    found.role = properRole;
+  if (!isInstitutionalEmail(found.email) && found.role !== 'Viewer') {
+    found.role = 'Viewer';
     saveUsersFile(fallbackUsers);
   }
 
@@ -177,9 +183,8 @@ export async function findUserById(id) {
       user = await User.findOne({ _id: id }).select('-password').catch(() => null);
     }
     if (user) {
-      const properRole = determineRoleByEmail(user.email);
-      if (user.role !== properRole) {
-        user.role = properRole;
+      if (!isInstitutionalEmail(user.email) && user.role !== 'Viewer') {
+        user.role = 'Viewer';
         await user.save();
       }
       return user;
@@ -200,9 +205,8 @@ export async function findUserById(id) {
   const found = fallbackUsers.find((u) => String(u._id) === String(id));
   if (!found) return null;
 
-  const properRole = determineRoleByEmail(found.email);
-  if (found.role !== properRole) {
-    found.role = properRole;
+  if (!isInstitutionalEmail(found.email) && found.role !== 'Viewer') {
+    found.role = 'Viewer';
     saveUsersFile(fallbackUsers);
   }
 
@@ -210,10 +214,10 @@ export async function findUserById(id) {
   return safeUser;
 }
 
-export async function createUser({ name, email, password, org }) {
+export async function createUser({ name, email, password, role, org }) {
   const cleanEmail = email.trim().toLowerCase();
-  // Server strictly enforces role and trusted organization, ignoring client payloads
-  const enforcedRole = determineRoleByEmail(cleanEmail);
+  // Server enforces role choice: institutional domains can be Auditor or Viewer; others strictly Viewer
+  const enforcedRole = determineRoleByEmail(cleanEmail, role);
   const resolvedOrg = determineOrgByEmail(cleanEmail, org);
 
   if (isDbConnected()) {
@@ -266,7 +270,7 @@ export async function createUser({ name, email, password, org }) {
   return safeUser;
 }
 
-export async function updateUserProfile(id, { name, org }) {
+export async function updateUserProfile(id, { name, org, role }) {
   if (isDbConnected()) {
     const user = mongoose.Types.ObjectId.isValid(id)
       ? await User.findById(id)
@@ -276,8 +280,12 @@ export async function updateUserProfile(id, { name, org }) {
     if (org !== undefined) {
       user.org = determineOrgByEmail(user.email, org);
     }
-    // Enforce role strictly
-    user.role = determineRoleByEmail(user.email);
+    // Allow institutional users (@vit or @vcomply) to switch between Auditor and Viewer
+    if (role && isInstitutionalEmail(user.email)) {
+      user.role = role === 'Viewer' ? 'Viewer' : 'Auditor';
+    } else if (!isInstitutionalEmail(user.email)) {
+      user.role = 'Viewer';
+    }
     await user.save();
     return {
       id: String(user._id),
@@ -303,7 +311,11 @@ export async function updateUserProfile(id, { name, org }) {
   if (org !== undefined) {
     user.org = determineOrgByEmail(user.email, org);
   }
-  user.role = determineRoleByEmail(user.email);
+  if (role && isInstitutionalEmail(user.email)) {
+    user.role = role === 'Viewer' ? 'Viewer' : 'Auditor';
+  } else if (!isInstitutionalEmail(user.email)) {
+    user.role = 'Viewer';
+  }
   user.updatedAt = new Date().toISOString();
 
   saveUsersFile(fallbackUsers);

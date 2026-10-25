@@ -29,11 +29,11 @@ export function getMailConfig() {
     process.env.SMTP_USER ||
     process.env.EMAIL_USER ||
     process.env.GMAIL_USER ||
-    'hemasrichowdarykilaru@gmail.com';
+    '';
 
   const fromAddress =
     process.env.EMAIL_FROM ||
-    `"EvidenceLoop Security" <${authUser}>`;
+    (authUser ? `"EvidenceLoop Security" <${authUser}>` : '"EvidenceLoop Security" <no-reply@evidenceloop.com>');
 
   return {
     authUser,
@@ -51,7 +51,7 @@ export function getMailTransporter() {
     process.env.SMTP_PASS ||
     process.env.EMAIL_PASS ||
     process.env.GMAIL_APP_PASSWORD ||
-    'hqon tiuu iesx ylgp';
+    '';
 
   if (authUser && smtpPass) {
     if (smtpHost) {

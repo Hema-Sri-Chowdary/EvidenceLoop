@@ -3,9 +3,14 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Ensure environment variables are loaded from server/.env or project root .env
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config();
 
 export function isProduction() {
   return process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
@@ -17,9 +22,6 @@ export const DATA_DIR = isServerless
   ? path.join(os.tmpdir(), 'evidenceloop-data')
   : path.resolve(__dirname, '../../data');
 export const DATA_FILE = path.join(DATA_DIR, 'obligations.json');
-
-const ATLAS_PRODUCTION_URI =
-  'mongodb+srv://hemasrichowdarykilaru_db_user:yuw40UOtNzFmaptG@cluster0.sj3hpus.mongodb.net/evidenceloop?retryWrites=true&w=majority';
 
 let cachedPromise = null;
 let lastFailTime = 0;
@@ -52,7 +54,21 @@ export async function connectDB() {
     }
   }
 
-  const uri = process.env.MONGODB_URI || ATLAS_PRODUCTION_URI;
+  const uri = process.env.MONGODB_URI;
+
+  if (!uri) {
+    lastFailTime = Date.now();
+    lastError = 'MONGODB_URI is not configured in environment variables.';
+    if (isProduction()) {
+      console.error(
+        '[Database Error] MONGODB_URI environment variable is missing. ' +
+        'Please configure MONGODB_URI in your environment settings (e.g. server/.env or Vercel Environment Variables).'
+      );
+      return null;
+    }
+    console.warn('[Database Notice] No MONGODB_URI configured. Operating in local development file fallback mode.');
+    return null;
+  }
 
   try {
     cachedPromise = mongoose.connect(uri, {

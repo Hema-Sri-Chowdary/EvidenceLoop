@@ -33,13 +33,13 @@ export function NotFoundPage() {
       >
         <ShieldAlert size={32} />
       </div>
-      <span style={{ fontSize: 12.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--teal-action)' }}>
+      <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--teal-action)' }}>
         404 Not Found
       </span>
-      <h1 style={{ marginTop: 8, fontSize: 30, fontWeight: 800, color: 'var(--text-primary)' }}>
+      <h1 style={{ marginTop: 8, fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>
         Page Does Not Exist
       </h1>
-      <p style={{ marginTop: 8, fontSize: 14.5, color: 'var(--text-secondary)', maxWidth: 440, lineHeight: 1.55 }}>
+      <p style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)', maxWidth: 440, lineHeight: 1.5 }}>
         The requested compliance record, audit page, or resource could not be located in EvidenceLoop.
       </p>
 
