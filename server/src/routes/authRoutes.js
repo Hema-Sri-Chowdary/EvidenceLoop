@@ -12,16 +12,17 @@ import {
   resetPassword,
 } from '../controllers/authController.js';
 import { requireAuth } from '../middleware/auth.js';
+import { loginLimiter, otpVerifyLimiter, passwordResetLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
-// Public auth endpoints
-router.post('/login', login);
-router.post('/verify-mfa', verifyMfa);
-router.post('/resend-otp', resendOtp);
-router.post('/register', register);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+// Public auth endpoints with rate limiting protection
+router.post('/login', loginLimiter, login);
+router.post('/verify-mfa', otpVerifyLimiter, verifyMfa);
+router.post('/resend-otp', otpVerifyLimiter, resendOtp);
+router.post('/register', loginLimiter, register);
+router.post('/forgot-password', passwordResetLimiter, forgotPassword);
+router.post('/reset-password', passwordResetLimiter, resetPassword);
 router.get('/demo-accounts', getDemoAccounts);
 
 // Protected user profile & account management endpoints

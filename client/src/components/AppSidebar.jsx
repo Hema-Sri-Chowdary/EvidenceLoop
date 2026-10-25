@@ -4,7 +4,7 @@ import { LayoutDashboard, CheckSquare, PlusCircle, ShieldAlert, X, Database, Use
 import { useAuth } from '../context/AuthContext.jsx';
 
 export function AppSidebar({ isOpen, onClose, onResetDemo }) {
-  const { canMutate, isAdmin, role } = useAuth();
+  const { canMutate, canDelete, role } = useAuth();
 
   const navItems = [
     {
@@ -109,7 +109,7 @@ export function AppSidebar({ isOpen, onClose, onResetDemo }) {
           <p className="sidebar-audit-desc">
             Evidence is strictly required. Tasks marked completed without proof remain flagged.
           </p>
-          {onResetDemo && isAdmin && (
+          {onResetDemo && canDelete && (
             <button
               onClick={onResetDemo}
               className="btn btn-secondary btn-sm"

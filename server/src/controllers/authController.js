@@ -18,8 +18,8 @@ import {
   createPasswordResetSession,
   verifyPasswordResetOtp,
 } from '../services/otpService.js';
+import { getJwtSecret } from '../config/jwt.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'evidenceloop_jwt_secret_audit_readiness_key_2026_secure';
 const JWT_EXPIRES_IN = '24h';
 
 /**
@@ -31,11 +31,11 @@ function generateToken(user) {
       id: String(user._id || user.id),
       email: user.email,
       name: user.name,
-      role: user.role,
+      role: user.role === 'Auditor' ? 'Auditor' : 'Viewer',
       org: user.org,
       mfaVerified: true,
     },
-    JWT_SECRET,
+    getJwtSecret(),
     { expiresIn: JWT_EXPIRES_IN }
   );
 }
@@ -72,13 +72,23 @@ export async function login(req, res, next) {
       });
     }
 
-    // Enforce role assignment rules dynamically
-    const enforcedRole = cleanEmail === 'admin@evidenceloop.com' ? 'Admin' : determineRoleByEmail(cleanEmail);
+    // Role assignment strictly derived server-side
+    const enforcedRole = determineRoleByEmail(cleanEmail);
     user.role = enforcedRole;
     user.org = determineOrgByEmail(cleanEmail, user.org);
 
-    // Step 2: Trigger Real-Time Multi-Factor Authentication via OTP
-    const { otpSessionToken, expiresInSeconds, previewOtp } = createOtpSession(user);
+    // Step 2: Trigger Real-Time Multi-Factor Authentication via OTP (awaited & error handled)
+    let otpData;
+    try {
+      otpData = await createOtpSession(user);
+    } catch (deliveryErr) {
+      return res.status(503).json({
+        success: false,
+        message: `MFA code dispatch failed: ${deliveryErr.message}. Please verify email delivery service.`,
+      });
+    }
+
+    const { otpSessionToken, expiresInSeconds, previewOtp } = otpData;
 
     return res.json({
       success: true,
@@ -115,7 +125,7 @@ export async function verifyMfa(req, res, next) {
       });
     }
 
-    const result = verifyOtp(otpSessionToken, otp);
+    const result = await verifyOtp(otpSessionToken, otp);
     if (!result.valid) {
       return res.status(400).json({
         success: false,
@@ -123,9 +133,8 @@ export async function verifyMfa(req, res, next) {
       });
     }
 
-    // Ensure role and org are guaranteed up to date
-    const properRole = result.user.email === 'admin@evidenceloop.com' ? 'Admin' : determineRoleByEmail(result.user.email);
-    result.user.role = properRole;
+    // Ensure role and org are guaranteed up to date (Auditor or Viewer)
+    result.user.role = determineRoleByEmail(result.user.email);
     result.user.org = determineOrgByEmail(result.user.email, result.user.org);
 
     // Issue JWT token
@@ -155,7 +164,16 @@ export async function resendOtp(req, res, next) {
       });
     }
 
-    const result = serviceResendOtp(otpSessionToken);
+    let result;
+    try {
+      result = await serviceResendOtp(otpSessionToken);
+    } catch (deliveryErr) {
+      return res.status(503).json({
+        success: false,
+        message: `MFA code redelivery failed: ${deliveryErr.message}.`,
+      });
+    }
+
     if (!result.success) {
       return res.status(400).json({
         success: false,
@@ -175,10 +193,10 @@ export async function resendOtp(req, res, next) {
 
 /**
  * POST /api/auth/register
- * Automatic role assignment:
- * - hemasrichowdary@gmail.com -> Admin
- * - @vit and @vcomply domain emails -> Auditor
- * - Others -> Viewer
+ * Server-Enforced Role Assignment:
+ * - @vit and @vcomply domains -> Auditor
+ * - All others -> Viewer
+ * Request body 'role' parameter is strictly ignored.
  */
 export async function register(req, res, next) {
   try {
@@ -203,6 +221,7 @@ export async function register(req, res, next) {
       });
     }
 
+    // Role sent by browser is ignored; strictly evaluated on server
     const user = await createUser({
       name,
       email: cleanEmail,
@@ -211,7 +230,17 @@ export async function register(req, res, next) {
     });
 
     // Start Real-Time MFA verification for newly created user
-    const { otpSessionToken, expiresInSeconds, previewOtp } = createOtpSession(user);
+    let otpData;
+    try {
+      otpData = await createOtpSession(user);
+    } catch (deliveryErr) {
+      return res.status(503).json({
+        success: false,
+        message: `Registration succeeded, but verification code delivery failed: ${deliveryErr.message}`,
+      });
+    }
+
+    const { otpSessionToken, expiresInSeconds, previewOtp } = otpData;
 
     return res.status(201).json({
       success: true,
@@ -242,7 +271,7 @@ export async function getMe(req, res, next) {
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
-    const properRole = user.email === 'admin@evidenceloop.com' ? 'Admin' : determineRoleByEmail(user.email);
+    const properRole = determineRoleByEmail(user.email);
     const properOrg = determineOrgByEmail(user.email, user.org);
 
     return res.json({
@@ -278,8 +307,8 @@ export async function updateProfile(req, res, next) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Role remains strictly tied to the email rule
-    updated.role = updated.email === 'admin@evidenceloop.com' ? 'Admin' : determineRoleByEmail(updated.email);
+    // Role remains strictly tied to the email rule (Auditor / Viewer)
+    updated.role = determineRoleByEmail(updated.email);
 
     return res.json({
       success: true,
@@ -315,14 +344,13 @@ export async function deleteAccount(req, res, next) {
 
 /**
  * GET /api/auth/demo-accounts
- * Exposes preset demo credentials for convenience in reviewer/evaluation sessions
  */
 export function getDemoAccounts(req, res) {
   const accounts = DEFAULT_USERS.map((u) => ({
     name: u.name,
     email: u.email,
     password: u.passwordRaw,
-    role: u.role,
+    role: u.role === 'Auditor' ? 'Auditor' : 'Viewer',
     org: u.org,
   }));
   res.json({
@@ -333,7 +361,7 @@ export function getDemoAccounts(req, res) {
 
 /**
  * POST /api/auth/forgot-password
- * Step 1: Request password reset OTP
+ * Generic response prevents email enumeration attacks
  */
 export async function forgotPassword(req, res, next) {
   try {
@@ -344,18 +372,30 @@ export async function forgotPassword(req, res, next) {
 
     const cleanEmail = email.trim().toLowerCase();
     const user = await findUserByEmail(cleanEmail);
+
+    // Generic response if account doesn't exist (prevents account enumeration)
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'No registered account found with this email address.',
+      return res.json({
+        success: true,
+        message: 'If an account is associated with this email, a verification code has been dispatched.',
       });
     }
 
-    const { resetSessionToken, expiresInSeconds, previewOtp } = createPasswordResetSession(user);
+    let resetData;
+    try {
+      resetData = await createPasswordResetSession(user);
+    } catch (deliveryErr) {
+      return res.status(503).json({
+        success: false,
+        message: `Password reset delivery failed: ${deliveryErr.message}.`,
+      });
+    }
+
+    const { resetSessionToken, expiresInSeconds, previewOtp } = resetData;
 
     return res.json({
       success: true,
-      message: `Password reset verification code dispatched to ${user.email}`,
+      message: 'If an account is associated with this email, a verification code has been dispatched.',
       resetSessionToken,
       expiresInSeconds,
       previewOtp,
@@ -388,7 +428,7 @@ export async function resetPassword(req, res, next) {
       });
     }
 
-    const result = verifyPasswordResetOtp(resetSessionToken, otp);
+    const result = await verifyPasswordResetOtp(resetSessionToken, otp);
     if (!result.valid) {
       return res.status(400).json({
         success: false,

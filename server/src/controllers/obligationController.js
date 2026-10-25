@@ -12,10 +12,13 @@ function initFallbackStore() {
   const defaultSeeds = generateSeedObligations().map((item, idx) => ({
     _id: `obl_${idx + 1}`,
     ...item,
-    evidence: Array.isArray(item.evidence) ? item.evidence.map((ev, eIdx) => ({
-      _id: `ev_${idx + 1}_${eIdx + 1}`,
-      ...ev,
-    })) : [],
+    org: 'General Organization',
+    evidence: Array.isArray(item.evidence)
+      ? item.evidence.map((ev, eIdx) => ({
+          _id: `ev_${idx + 1}_${eIdx + 1}`,
+          ...ev,
+        }))
+      : [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }));
@@ -27,38 +30,61 @@ let fallbackStore = initFallbackStore();
 
 function persistFallbackStore(records) {
   fallbackStore = records;
-  saveFallbackData(records);
+  const saved = saveFallbackData(records);
+  if (!saved) {
+    throw new Error('Failed to persist obligation records to storage.');
+  }
+}
+
+/**
+ * Check if a record is accessible to the user's trusted organization
+ */
+function isOrgAccessible(recordOrg, userOrg) {
+  if (!recordOrg || recordOrg === 'General Organization') return true;
+  return recordOrg === userOrg;
 }
 
 /**
  * GET /api/obligations
+ * Scoped to authenticated user's trusted organization identifier
  */
 export async function getObligations(req, res, next) {
   try {
     const { search, status, priority, evidenceStatus, sortBy = 'dueDate', order = 'asc' } = req.query;
+    const userOrg = req.user?.org || 'General Organization';
 
     if (isDbConnected()) {
-      // Build safe query filter
-      const query = {};
+      // Organization filter
+      const orgFilter = {
+        $or: [
+          { org: userOrg },
+          { org: 'General Organization' },
+          { org: { $exists: false } },
+        ],
+      };
+
+      const conditions = [orgFilter];
 
       if (search) {
         const safeRegex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-        query.$or = [{ title: safeRegex }, { owner: safeRegex }, { category: safeRegex }];
+        conditions.push({
+          $or: [{ title: safeRegex }, { owner: safeRegex }, { category: safeRegex }],
+        });
       }
 
       if (status && status !== 'All') {
-        query.status = status;
+        conditions.push({ status });
       }
 
       if (priority && priority !== 'All') {
-        query.priority = priority;
+        conditions.push({ priority });
       }
 
-      // Sort direction
+      const query = conditions.length === 1 ? conditions[0] : { $and: conditions };
+
       const sortDirection = order === 'desc' ? -1 : 1;
       let sortConfig = { [sortBy]: sortDirection };
       if (sortBy === 'priority') {
-        // Priority custom sorting requires post-processing or aggregate
         sortConfig = { createdAt: -1 };
       }
 
@@ -85,11 +111,18 @@ export async function getObligations(req, res, next) {
         success: true,
         data: enriched,
         total: enriched.length,
+        tenantScope: {
+          enforced: true,
+          organization: userOrg,
+          role: req.user?.role,
+        },
       });
     }
 
-    // Persistent file-backed fallback
-    let records = [...fallbackStore].map((item) => enrichObligation(item));
+    // Persistent file-backed fallback with organization scoping
+    let records = [...fallbackStore]
+      .filter((o) => isOrgAccessible(o.org, userOrg))
+      .map((item) => enrichObligation(item));
 
     if (search) {
       const q = search.toLowerCase().trim();
@@ -138,6 +171,11 @@ export async function getObligations(req, res, next) {
       success: true,
       data: records,
       total: records.length,
+      tenantScope: {
+        enforced: true,
+        organization: userOrg,
+        role: req.user?.role,
+      },
     });
   } catch (error) {
     next(error);
@@ -150,12 +188,22 @@ export async function getObligations(req, res, next) {
 export async function getObligationById(req, res, next) {
   try {
     const { id } = req.params;
+    const userOrg = req.user?.org || 'General Organization';
 
     if (isDbConnected()) {
       const doc = await Obligation.findById(id).lean();
       if (!doc) {
         return res.status(404).json({ success: false, message: `Obligation not found with ID ${id}` });
       }
+
+      // Enforce organization data isolation
+      if (!isOrgAccessible(doc.org, userOrg)) {
+        return res.status(403).json({
+          success: false,
+          message: `Forbidden: Obligation belongs to organization '${doc.org}'. You are authenticated with '${userOrg}'.`,
+        });
+      }
+
       return res.json({ success: true, data: enrichObligation(doc) });
     }
 
@@ -163,6 +211,14 @@ export async function getObligationById(req, res, next) {
     if (!item) {
       return res.status(404).json({ success: false, message: `Obligation not found with ID ${id}` });
     }
+
+    if (!isOrgAccessible(item.org, userOrg)) {
+      return res.status(403).json({
+        success: false,
+        message: `Forbidden: Obligation belongs to organization '${item.org}'. You are authenticated with '${userOrg}'.`,
+      });
+    }
+
     return res.json({ success: true, data: enrichObligation(item) });
   } catch (error) {
     next(error);
@@ -171,10 +227,12 @@ export async function getObligationById(req, res, next) {
 
 /**
  * POST /api/obligations
+ * Automatically tagged with authenticated user's trusted organization
  */
 export async function createObligation(req, res, next) {
   try {
     const { title, description, category, owner, dueDate, priority, status, evidenceRequired, evidence } = req.body;
+    const userOrg = req.user?.org || 'General Organization';
 
     if (isDbConnected()) {
       const doc = new Obligation({
@@ -187,6 +245,7 @@ export async function createObligation(req, res, next) {
         status: status || 'Open',
         evidenceRequired: evidenceRequired !== undefined ? evidenceRequired : true,
         evidence: Array.isArray(evidence) ? evidence : [],
+        org: userOrg,
       });
       await doc.save();
       return res.status(201).json({
@@ -207,6 +266,7 @@ export async function createObligation(req, res, next) {
       status: status || 'Open',
       evidenceRequired: evidenceRequired !== undefined ? evidenceRequired : true,
       evidence: Array.isArray(evidence) ? evidence : [],
+      org: userOrg,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -230,20 +290,31 @@ export async function updateObligation(req, res, next) {
   try {
     const { id } = req.params;
     const updates = req.body;
+    const userOrg = req.user?.org || 'General Organization';
 
     if (isDbConnected()) {
-      const doc = await Obligation.findByIdAndUpdate(id, updates, {
-        new: true,
-        runValidators: true,
-      }).lean();
-
-      if (!doc) {
+      const existing = await Obligation.findById(id);
+      if (!existing) {
         return res.status(404).json({ success: false, message: `Obligation not found with ID ${id}` });
       }
+
+      if (!isOrgAccessible(existing.org, userOrg)) {
+        return res.status(403).json({
+          success: false,
+          message: `Forbidden: You are not authorized to modify obligations belonging to '${existing.org}'.`,
+        });
+      }
+
+      // Do not allow arbitrary reassignment of organization
+      delete updates.org;
+
+      Object.assign(existing, updates);
+      await existing.save();
+
       return res.json({
         success: true,
         message: 'Obligation updated successfully',
-        data: enrichObligation(doc),
+        data: enrichObligation(existing),
       });
     }
 
@@ -252,6 +323,14 @@ export async function updateObligation(req, res, next) {
       return res.status(404).json({ success: false, message: `Obligation not found with ID ${id}` });
     }
 
+    if (!isOrgAccessible(fallbackStore[idx].org, userOrg)) {
+      return res.status(403).json({
+        success: false,
+        message: `Forbidden: You are not authorized to modify obligations belonging to '${fallbackStore[idx].org}'.`,
+      });
+    }
+
+    delete updates.org;
     fallbackStore[idx] = {
       ...fallbackStore[idx],
       ...updates,
@@ -271,24 +350,43 @@ export async function updateObligation(req, res, next) {
 
 /**
  * DELETE /api/obligations/:id
+ * Delete operation granted to Auditor role
  */
 export async function deleteObligation(req, res, next) {
   try {
     const { id } = req.params;
+    const userOrg = req.user?.org || 'General Organization';
 
     if (isDbConnected()) {
-      const doc = await Obligation.findByIdAndDelete(id);
-      if (!doc) {
+      const existing = await Obligation.findById(id);
+      if (!existing) {
         return res.status(404).json({ success: false, message: `Obligation not found with ID ${id}` });
       }
+
+      if (!isOrgAccessible(existing.org, userOrg)) {
+        return res.status(403).json({
+          success: false,
+          message: `Forbidden: You are not authorized to delete obligations belonging to '${existing.org}'.`,
+        });
+      }
+
+      await Obligation.findByIdAndDelete(id);
       return res.json({ success: true, message: 'Obligation deleted successfully' });
     }
 
-    const initialLen = fallbackStore.length;
-    const remaining = fallbackStore.filter((o) => String(o._id) !== String(id));
-    if (remaining.length === initialLen) {
+    const existing = fallbackStore.find((o) => String(o._id) === String(id));
+    if (!existing) {
       return res.status(404).json({ success: false, message: `Obligation not found with ID ${id}` });
     }
+
+    if (!isOrgAccessible(existing.org, userOrg)) {
+      return res.status(403).json({
+        success: false,
+        message: `Forbidden: You are not authorized to delete obligations belonging to '${existing.org}'.`,
+      });
+    }
+
+    const remaining = fallbackStore.filter((o) => String(o._id) !== String(id));
     persistFallbackStore(remaining);
 
     return res.json({ success: true, message: 'Obligation deleted successfully' });
@@ -304,11 +402,19 @@ export async function addEvidence(req, res, next) {
   try {
     const { id } = req.params;
     const { label, url } = req.body;
+    const userOrg = req.user?.org || 'General Organization';
 
     if (isDbConnected()) {
       const doc = await Obligation.findById(id);
       if (!doc) {
         return res.status(404).json({ success: false, message: `Obligation not found with ID ${id}` });
+      }
+
+      if (!isOrgAccessible(doc.org, userOrg)) {
+        return res.status(403).json({
+          success: false,
+          message: `Forbidden: You are not authorized to attach evidence to records belonging to '${doc.org}'.`,
+        });
       }
 
       doc.evidence.push({ label: label.trim(), url: url.trim(), addedAt: new Date() });
@@ -324,6 +430,13 @@ export async function addEvidence(req, res, next) {
     const idx = fallbackStore.findIndex((o) => String(o._id) === String(id));
     if (idx === -1) {
       return res.status(404).json({ success: false, message: `Obligation not found with ID ${id}` });
+    }
+
+    if (!isOrgAccessible(fallbackStore[idx].org, userOrg)) {
+      return res.status(403).json({
+        success: false,
+        message: `Forbidden: You are not authorized to attach evidence to records belonging to '${fallbackStore[idx].org}'.`,
+      });
     }
 
     const ev = {
@@ -350,20 +463,26 @@ export async function addEvidence(req, res, next) {
 }
 
 /**
- * POST /api/seed
- * Seeds or resets fictional compliance records without duplicate accumulation.
+ * POST /api/obligations/seed
+ * Seed compliance baseline templates
  */
 export async function seedObligations(req, res, next) {
   try {
     const seedRecords = generateSeedObligations();
+    const userOrg = req.user?.org || 'General Organization';
+
+    const recordsWithOrg = seedRecords.map((item) => ({
+      ...item,
+      org: userOrg,
+    }));
 
     if (isDbConnected()) {
-      await Obligation.deleteMany({});
-      const created = await Obligation.insertMany(seedRecords);
+      await Obligation.deleteMany({ org: userOrg });
+      const created = await Obligation.insertMany(recordsWithOrg);
       const enriched = created.map((doc) => enrichObligation(doc));
       return res.json({
         success: true,
-        message: `Successfully seeded ${created.length} compliance obligations`,
+        message: `Successfully seeded ${created.length} compliance obligations for ${userOrg}`,
         count: created.length,
         data: enriched,
       });
@@ -372,10 +491,13 @@ export async function seedObligations(req, res, next) {
     const newSeeds = seedRecords.map((item, idx) => ({
       _id: `obl_${idx + 1}`,
       ...item,
-      evidence: Array.isArray(item.evidence) ? item.evidence.map((ev, eIdx) => ({
-        _id: `ev_${idx + 1}_${eIdx + 1}`,
-        ...ev,
-      })) : [],
+      org: userOrg,
+      evidence: Array.isArray(item.evidence)
+        ? item.evidence.map((ev, eIdx) => ({
+            _id: `ev_${idx + 1}_${eIdx + 1}`,
+            ...ev,
+          }))
+        : [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }));
@@ -393,3 +515,13 @@ export async function seedObligations(req, res, next) {
     next(error);
   }
 }
+
+export default {
+  getObligations,
+  getObligationById,
+  createObligation,
+  updateObligation,
+  deleteObligation,
+  addEvidence,
+  seedObligations,
+};

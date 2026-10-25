@@ -37,7 +37,7 @@ export function App() {
             <Route
               path="obligations/new"
               element={
-                <ProtectedRoute allowedRoles={['Admin', 'Auditor']}>
+                <ProtectedRoute allowedRoles={['Auditor']}>
                   <CreateObligationPage />
                 </ProtectedRoute>
               }
@@ -46,7 +46,7 @@ export function App() {
             <Route
               path="obligations/:id/edit"
               element={
-                <ProtectedRoute allowedRoles={['Admin', 'Auditor']}>
+                <ProtectedRoute allowedRoles={['Auditor']}>
                   <EditObligationPage />
                 </ProtectedRoute>
               }

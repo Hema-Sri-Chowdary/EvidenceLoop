@@ -18,7 +18,7 @@ import {
 
 export function UserProfileModal({ isOpen, onClose }) {
   const navigate = useNavigate();
-  const { user, role, isAdmin, isAuditor, isViewer, updateProfile, deleteAccount, logout } = useAuth();
+  const { user, role, isAuditor, isViewer, updateProfile, deleteAccount, logout } = useAuth();
   const toast = useToast();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -37,21 +37,13 @@ export function UserProfileModal({ isOpen, onClose }) {
 
   const getRoleTheme = (r) => {
     switch (r) {
-      case 'Admin':
-        return {
-          bg: '#FAF5FF',
-          border: '#D8B4FE',
-          color: '#7E22CE',
-          tag: 'Administrator (Super Authority)',
-          desc: 'Assigned via hemasrichowdary@gmail.com. Complete platform management, deletion authority, and compliance reset permissions.',
-        };
       case 'Auditor':
         return {
           bg: '#EFF6FF',
           border: '#BFDBFE',
           color: '#1D4ED8',
           tag: 'Compliance & Institutional Auditor',
-          desc: 'Assigned via @vit and @vcomply domains. Full authority to create, edit, assess obligations, and attach audit evidence.',
+          desc: 'Assigned via @vit and @vcomply domains. Full authority to create, edit, evaluate, and delete compliance obligations, and attach audit evidence.',
         };
       default:
         return {

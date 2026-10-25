@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { findUserById } from '../config/userStore.js';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'evidenceloop_jwt_secret_audit_readiness_key_2026_secure';
+import { getJwtSecret } from '../config/jwt.js';
 
 /**
  * Authentication Middleware
@@ -21,7 +20,7 @@ export async function requireAuth(req, res, next) {
     let decoded;
 
     try {
-      decoded = jwt.verify(token, JWT_SECRET);
+      decoded = jwt.verify(token, getJwtSecret());
     } catch (err) {
       if (err.name === 'TokenExpiredError') {
         return res.status(401).json({
@@ -69,7 +68,7 @@ export async function requireAuth(req, res, next) {
 
 /**
  * Role-Based Authorization Middleware
- * Usage: requireRole('Admin') or requireRole('Admin', 'Auditor')
+ * Usage: requireRole('Auditor') or requireRole('Auditor', 'Viewer')
  */
 export function requireRole(...allowedRoles) {
   return (req, res, next) => {

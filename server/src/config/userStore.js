@@ -10,17 +10,15 @@ const __dirname = path.dirname(__filename);
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
 /**
- * Enforce role assignment rules:
- * - 'hemasrichowdary@gmail.com' is ALWAYS Admin
- * - Anyone with '@vit' or '@vcomply' in their email domain is ALWAYS Auditor
- * - Remaining accounts are Viewers
+ * Server-Enforced Role Assignment Rules:
+ * - Strictly two roles: 'Auditor' and 'Viewer' (Admin role removed entirely)
+ * - Users with '@vit' or '@vcomply' domains are assigned 'Auditor'
+ * - All other accounts are assigned 'Viewer'
+ * - Roles sent by the browser are strictly ignored
  */
 export function determineRoleByEmail(email) {
   if (!email || typeof email !== 'string') return 'Viewer';
   const clean = email.trim().toLowerCase();
-  if (clean === 'hemasrichowdary@gmail.com' || clean === 'hemasrichowdarykilaru@gmail.com') {
-    return 'Admin';
-  }
   if (
     clean.includes('@vit') ||
     clean.includes('.vit.') ||
@@ -33,26 +31,30 @@ export function determineRoleByEmail(email) {
 }
 
 /**
- * Determine default organization if none explicitly supplied
+ * Trusted Organization Identifier Determination:
+ * - Domain-verified emails are assigned their trusted organization
+ * - External/unverified domains cannot spoof reserved institutional organizations
  */
 export function determineOrgByEmail(email, customOrg) {
-  if (customOrg && typeof customOrg === 'string' && customOrg.trim()) {
-    return customOrg.trim();
-  }
   const clean = (email || '').trim().toLowerCase();
-  if (clean === 'hemasrichowdary@gmail.com' || clean === 'hemasrichowdarykilaru@gmail.com') {
-    return 'VIT-AP University / EvidenceLoop Principal';
-  }
   if (clean.includes('@vcomply') || clean.includes('.vcomply.')) {
     return 'VComply';
   }
   if (clean.includes('@vit') || clean.includes('.vit.')) {
-    return 'VIT University';
+    return 'VIT-AP University';
+  }
+  if (customOrg && typeof customOrg === 'string' && customOrg.trim()) {
+    const cleanCustom = customOrg.trim();
+    // Prevent spoofing of institutional domains
+    if (/vcomply/i.test(cleanCustom) || /vit/i.test(cleanCustom)) {
+      return 'Compliance Observer Organization';
+    }
+    return cleanCustom;
   }
   return 'Compliance Observer Organization';
 }
 
-// Registered accounts list (cleared so user can register fresh accounts)
+// Registered accounts list (fresh accounts register dynamically)
 export const DEFAULT_USERS = [];
 
 let fallbackUsers = [];
@@ -80,7 +82,7 @@ function saveUsersFile(users) {
     return true;
   } catch (err) {
     console.error(`[UserStore Error] Failed to persist ${USERS_FILE}:`, err.message);
-    return false;
+    throw new Error(`Failed to persist user storage: ${err.message}`);
   }
 }
 
@@ -96,12 +98,11 @@ export async function initUserStore() {
     return;
   }
 
-  // If no file exists, initialize empty list
   fallbackUsers = [];
   saveUsersFile(fallbackUsers);
 }
 
-// Seed MongoDB if connected and empty
+// Seed MongoDB if empty
 export async function seedMongoUsersIfEmpty() {
   if (!isDbConnected()) return;
   if (!Array.isArray(DEFAULT_USERS) || DEFAULT_USERS.length === 0) return;
@@ -114,8 +115,8 @@ export async function seedMongoUsersIfEmpty() {
           name: u.name,
           email: cleanEmail,
           password: u.passwordRaw,
-          role: u.role,
-          org: u.org || determineOrgByEmail(cleanEmail),
+          role: determineRoleByEmail(cleanEmail),
+          org: determineOrgByEmail(cleanEmail, u.org),
           mfaEnabled: u.mfaEnabled,
         });
       }
@@ -125,14 +126,14 @@ export async function seedMongoUsersIfEmpty() {
   }
 }
 
-
 export async function findUserByEmail(email) {
   const cleanEmail = email.trim().toLowerCase();
+  const properRole = determineRoleByEmail(cleanEmail);
+
   if (isDbConnected()) {
     const user = await User.findOne({ email: cleanEmail });
     if (user) {
-      const properRole = determineRoleByEmail(cleanEmail);
-      if (cleanEmail !== 'admin@evidenceloop.com' && user.role !== properRole) {
+      if (user.role !== properRole) {
         user.role = properRole;
         await user.save();
       }
@@ -148,8 +149,7 @@ export async function findUserByEmail(email) {
   if (!found) return null;
 
   // Enforce role
-  const properRole = determineRoleByEmail(cleanEmail);
-  if (cleanEmail !== 'admin@evidenceloop.com' && found.role !== properRole) {
+  if (found.role !== properRole) {
     found.role = properRole;
     saveUsersFile(fallbackUsers);
   }
@@ -165,7 +165,7 @@ export async function findUserById(id) {
     const user = await User.findById(id).select('-password');
     if (user) {
       const properRole = determineRoleByEmail(user.email);
-      if (user.email !== 'admin@evidenceloop.com' && user.role !== properRole) {
+      if (user.role !== properRole) {
         user.role = properRole;
         await user.save();
       }
@@ -181,7 +181,7 @@ export async function findUserById(id) {
   if (!found) return null;
 
   const properRole = determineRoleByEmail(found.email);
-  if (found.email !== 'admin@evidenceloop.com' && found.role !== properRole) {
+  if (found.role !== properRole) {
     found.role = properRole;
     saveUsersFile(fallbackUsers);
   }
@@ -192,6 +192,7 @@ export async function findUserById(id) {
 
 export async function createUser({ name, email, password, org }) {
   const cleanEmail = email.trim().toLowerCase();
+  // Server strictly enforces role and trusted organization, ignoring client payloads
   const enforcedRole = determineRoleByEmail(cleanEmail);
   const resolvedOrg = determineOrgByEmail(cleanEmail, org);
 
@@ -246,7 +247,11 @@ export async function updateUserProfile(id, { name, org }) {
     const user = await User.findById(id);
     if (!user) return null;
     if (name && name.trim()) user.name = name.trim();
-    if (org !== undefined) user.org = org.trim();
+    if (org !== undefined) {
+      user.org = determineOrgByEmail(user.email, org);
+    }
+    // Enforce role strictly
+    user.role = determineRoleByEmail(user.email);
     await user.save();
     return {
       id: String(user._id),
@@ -265,7 +270,10 @@ export async function updateUserProfile(id, { name, org }) {
   if (!user) return null;
 
   if (name && name.trim()) user.name = name.trim();
-  if (org !== undefined) user.org = org.trim();
+  if (org !== undefined) {
+    user.org = determineOrgByEmail(user.email, org);
+  }
+  user.role = determineRoleByEmail(user.email);
   user.updatedAt = new Date().toISOString();
 
   saveUsersFile(fallbackUsers);
@@ -321,5 +329,4 @@ export async function updateUserPassword(email, newHashedPassword) {
   return true;
 }
 
-// Immediately initialize fallback store in background
 initUserStore();

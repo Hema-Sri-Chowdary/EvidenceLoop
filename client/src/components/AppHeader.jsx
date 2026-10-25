@@ -12,8 +12,6 @@ export function AppHeader({ onOpenSidebar, isBackendOnline = true }) {
 
   const getRoleBadgeStyle = (r) => {
     switch (r) {
-      case 'Admin':
-        return { backgroundColor: '#F3E8FF', color: '#7E22CE', border: '1px solid #D8B4FE' };
       case 'Auditor':
         return { backgroundColor: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE' };
       default:
@@ -144,7 +142,7 @@ export function AppHeader({ onOpenSidebar, isBackendOnline = true }) {
             </button>
           )}
 
-          {/* Primary Action Button (Restricted to Admin & Auditor) */}
+          {/* Primary Action Button (Restricted to Auditor) */}
           {canMutate && (
             <button onClick={() => navigate('/obligations/new')} className="btn btn-primary">
               <Plus size={16} />

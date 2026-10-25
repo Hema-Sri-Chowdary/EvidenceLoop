@@ -47,21 +47,13 @@ export function ProfilePage() {
 
   const getRoleTheme = (r) => {
     switch (r) {
-      case 'Admin':
-        return {
-          bg: '#FAF5FF',
-          border: '#D8B4FE',
-          color: '#7E22CE',
-          tag: 'System Administrator (Full Authority)',
-          desc: 'Assigned via hemasrichowdary@gmail.com. Complete platform management, obligation creation, audit modifications, and record deletion.',
-        };
       case 'Auditor':
         return {
           bg: '#EFF6FF',
           border: '#BFDBFE',
           color: '#1D4ED8',
           tag: 'Compliance & Institutional Auditor',
-          desc: 'Assigned via @vit and @vcomply domains. Full authority to create, edit, evaluate obligations, and attach compliance evidence.',
+          desc: 'Assigned via @vit and @vcomply domains. Full authority to create, edit, evaluate, and delete compliance obligations, with evidence management.',
         };
       default:
         return {

@@ -20,12 +20,9 @@ export function LoginPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Determine dynamic role based on input email
+  // Determine dynamic role based on input email (Auditor vs Viewer)
   const getDynamicRole = (email) => {
     const clean = (email || '').trim().toLowerCase();
-    if (clean === 'hemasrichowdary@gmail.com' || clean === 'hemasrichowdarykilaru@gmail.com') {
-      return { role: 'Admin', color: '#6B21A8', bg: '#FAF5FF', border: '#D8B4FE', label: 'Admin (EvidenceLoop Principal)' };
-    }
     if (clean.includes('@vit') || clean.includes('.vit.') || clean.includes('@vcomply') || clean.includes('.vcomply.')) {
       const orgTag = clean.includes('vcomply') ? 'VComply Auditor' : 'VIT Institutional Auditor';
       return { role: 'Auditor', color: '#1E40AF', bg: '#EFF6FF', border: '#BFDBFE', label: `Auditor (${orgTag})` };
@@ -270,11 +267,9 @@ export function LoginPage() {
             >
               <strong style={{ color: '#0F172A' }}>Role Assignment Policy:</strong>
               <div style={{ marginTop: 4 }}>
-                &bull; <code>hemasrichowdary@gmail.com</code> &rarr; <strong style={{ color: '#7E22CE' }}>Admin</strong>
+                &bull; <code>@vit</code> &amp; <code>@vcomply</code> domains &rarr; <strong style={{ color: '#1D4ED8' }}>Auditor</strong> (Full create, edit &amp; delete permissions)
                 <br />
-                &bull; <code>@vit</code> &amp; <code>@vcomply</code> domains &rarr; <strong style={{ color: '#1D4ED8' }}>Auditor</strong>
-                <br />
-                &bull; All other email domains &rarr; <strong style={{ color: '#334155' }}>Viewer</strong>
+                &bull; All other email domains &rarr; <strong style={{ color: '#334155' }}>Viewer</strong> (Read-only observation)
               </div>
             </div>
           )}

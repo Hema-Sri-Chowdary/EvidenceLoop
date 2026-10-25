@@ -92,12 +92,11 @@ export function AuthProvider({ children }) {
     setToken(null);
   }, []);
 
-  const role = user?.role || 'Viewer';
-  const isAdmin = role === 'Admin';
+  const role = user?.role === 'Auditor' ? 'Auditor' : 'Viewer';
   const isAuditor = role === 'Auditor';
   const isViewer = role === 'Viewer';
-  const canMutate = isAdmin || isAuditor;
-  const canDelete = isAdmin;
+  const canMutate = isAuditor;
+  const canDelete = isAuditor;
 
   const value = {
     user,
@@ -105,7 +104,7 @@ export function AuthProvider({ children }) {
     role,
     isAuthenticated: !!token && !!user,
     isLoading,
-    isAdmin,
+    isAdmin: false,
     isAuditor,
     isViewer,
     canMutate,

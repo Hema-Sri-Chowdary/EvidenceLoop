@@ -86,6 +86,12 @@ const ObligationSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    org: {
+      type: String,
+      trim: true,
+      default: 'General Organization',
+      index: true,
+    },
     evidence: [EvidenceSchema],
   },
   {
@@ -95,7 +101,7 @@ const ObligationSchema = new mongoose.Schema(
 
 // Index for search and query performance
 ObligationSchema.index({ title: 'text', owner: 'text', category: 'text' });
-ObligationSchema.index({ status: 1, priority: 1, dueDate: 1 });
+ObligationSchema.index({ org: 1, status: 1, priority: 1, dueDate: 1 });
 
 export const Obligation = mongoose.model('Obligation', ObligationSchema);
 export default Obligation;
