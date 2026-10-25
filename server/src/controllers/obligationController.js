@@ -1,10 +1,11 @@
 import Obligation from '../models/Obligation.js';
-import { isDbConnected, loadFallbackData, saveFallbackData } from '../config/db.js';
+import { isDbConnected, isProduction, loadFallbackData, saveFallbackData } from '../config/db.js';
 import { enrichObligation, calculateReadiness } from '../services/readinessService.js';
 import { generateSeedObligations } from '../utils/seedData.js';
 
-// Predictable file-backed fallback store when MongoDB is unavailable
+// Predictable file-backed fallback store when MongoDB is unavailable (strictly local dev)
 function initFallbackStore() {
+  if (isProduction()) return [];
   const loaded = loadFallbackData();
   if (loaded && Array.isArray(loaded) && loaded.length > 0) {
     return loaded;
@@ -29,6 +30,7 @@ function initFallbackStore() {
 let fallbackStore = initFallbackStore();
 
 function persistFallbackStore(records) {
+  if (isProduction()) return;
   fallbackStore = records;
   const saved = saveFallbackData(records);
   if (!saved) {
@@ -119,7 +121,14 @@ export async function getObligations(req, res, next) {
       });
     }
 
-    // Persistent file-backed fallback with organization scoping
+    if (isProduction()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection unavailable. MongoDB Atlas is mandatory in production.',
+      });
+    }
+
+    // Persistent file-backed fallback with organization scoping (local dev only)
     let records = [...fallbackStore]
       .filter((o) => isOrgAccessible(o.org, userOrg))
       .map((item) => enrichObligation(item));
@@ -207,6 +216,13 @@ export async function getObligationById(req, res, next) {
       return res.json({ success: true, data: enrichObligation(doc) });
     }
 
+    if (isProduction()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection unavailable. MongoDB Atlas is mandatory in production.',
+      });
+    }
+
     const item = fallbackStore.find((o) => String(o._id) === String(id));
     if (!item) {
       return res.status(404).json({ success: false, message: `Obligation not found with ID ${id}` });
@@ -252,6 +268,13 @@ export async function createObligation(req, res, next) {
         success: true,
         message: 'Obligation created successfully',
         data: enrichObligation(doc),
+      });
+    }
+
+    if (isProduction()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection unavailable. MongoDB Atlas is mandatory in production.',
       });
     }
 
@@ -318,6 +341,13 @@ export async function updateObligation(req, res, next) {
       });
     }
 
+    if (isProduction()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection unavailable. MongoDB Atlas is mandatory in production.',
+      });
+    }
+
     const idx = fallbackStore.findIndex((o) => String(o._id) === String(id));
     if (idx === -1) {
       return res.status(404).json({ success: false, message: `Obligation not found with ID ${id}` });
@@ -374,6 +404,13 @@ export async function deleteObligation(req, res, next) {
       return res.json({ success: true, message: 'Obligation deleted successfully' });
     }
 
+    if (isProduction()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection unavailable. MongoDB Atlas is mandatory in production.',
+      });
+    }
+
     const existing = fallbackStore.find((o) => String(o._id) === String(id));
     if (!existing) {
       return res.status(404).json({ success: false, message: `Obligation not found with ID ${id}` });
@@ -424,6 +461,13 @@ export async function addEvidence(req, res, next) {
         success: true,
         message: 'Evidence attached successfully',
         data: enrichObligation(doc),
+      });
+    }
+
+    if (isProduction()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection unavailable. MongoDB Atlas is mandatory in production.',
       });
     }
 
@@ -485,6 +529,13 @@ export async function seedObligations(req, res, next) {
         message: `Successfully seeded ${created.length} compliance obligations for ${userOrg}`,
         count: created.length,
         data: enriched,
+      });
+    }
+
+    if (isProduction()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection unavailable. MongoDB Atlas is mandatory in production.',
       });
     }
 

@@ -1,5 +1,5 @@
 import Obligation from '../models/Obligation.js';
-import { isDbConnected } from '../config/db.js';
+import { isDbConnected, isProduction } from '../config/db.js';
 import { calculateDashboardSummary } from '../services/readinessService.js';
 
 /**
@@ -21,6 +21,12 @@ export async function getDashboardSummary(req, res, next) {
       };
       obligations = await Obligation.find(orgFilter).lean();
     } else {
+      if (isProduction()) {
+        return res.status(503).json({
+          success: false,
+          message: 'Database connection unavailable. MongoDB Atlas is mandatory in production.',
+        });
+      }
       const { getObligations } = await import('./obligationController.js');
       const fakeReq = { query: {}, user: req.user };
       const fakeRes = {

@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import OtpSession from '../models/OtpSession.js';
-import { isDbConnected } from '../config/db.js';
+import { isDbConnected, isProduction } from '../config/db.js';
 
 // Fallback in-memory active OTP verification sessions (strictly for local offline dev)
 // Key: otpSessionToken -> { userId, email, otpHash, expiresAt, attempts, maxAttempts, org, role, name, purpose }
@@ -20,30 +20,47 @@ if (cleanupInterval.unref) cleanupInterval.unref();
 
 let mailTransporter = null;
 
+/**
+ * Shared mail configuration helper
+ * Supplies sender address consistently to both OTP and password-reset emails
+ */
+export function getMailConfig() {
+  const authUser =
+    process.env.SMTP_USER ||
+    process.env.EMAIL_USER ||
+    process.env.GMAIL_USER ||
+    'hemasrichowdarykilaru@gmail.com';
+
+  const fromAddress =
+    process.env.EMAIL_FROM ||
+    `"EvidenceLoop Security" <${authUser}>`;
+
+  return {
+    authUser,
+    fromAddress,
+  };
+}
+
 export function getMailTransporter() {
   if (mailTransporter) return mailTransporter;
 
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
-  const smtpUser =
-    process.env.SMTP_USER ||
-    process.env.EMAIL_USER ||
-    process.env.GMAIL_USER ||
-    'hemasrichowdarykilaru@gmail.com';
+  const { authUser } = getMailConfig();
   const smtpPass =
     process.env.SMTP_PASS ||
     process.env.EMAIL_PASS ||
     process.env.GMAIL_APP_PASSWORD ||
     'hqon tiuu iesx ylgp';
 
-  if (smtpUser && smtpPass) {
+  if (authUser && smtpPass) {
     if (smtpHost) {
       mailTransporter = nodemailer.createTransport({
         host: smtpHost,
         port: smtpPort,
         secure: smtpPort === 465,
         auth: {
-          user: smtpUser,
+          user: authUser,
           pass: smtpPass,
         },
       });
@@ -52,7 +69,7 @@ export function getMailTransporter() {
       mailTransporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-          user: smtpUser,
+          user: authUser,
           pass: smtpPass,
         },
       });
@@ -68,35 +85,20 @@ function hashOtp(otp) {
 
 /**
  * Dispatch OTP to account in real-time
- * Awaits delivery and handles errors cleanly.
- * Never prints raw OTP in production logs.
+ * Awaits delivery and propagates errors on failure.
+ * Never exposes raw OTP in production logs or responses.
  */
 export async function dispatchOtpToAccount(email, otp, name) {
-  const isProd = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
   const timestamp = new Date().toISOString();
-
-  // Audit safe dispatch log (OTP digits are NEVER exposed in production logs)
   console.log(`[REAL-TIME MFA DISPATCH] [${timestamp}] Recipient: ${email} (${name || 'User'}) - Validity: 10 mins`);
-  if (!isProd) {
-    // Only in development when debugging without mail client
-    // Note: Never logged in production
-  }
 
   const transporter = getMailTransporter();
   if (!transporter) {
-    console.warn(`[Real-Time MFA Notice] No SMTP credentials configured. Proceeding with instant code preview.`);
-    return;
+    console.error(`[Real-Time MFA Error] SMTP mail transporter is not configured.`);
+    throw new Error('Email delivery service is currently unavailable. Verification code could not be sent.');
   }
 
-  const authUser =
-    process.env.SMTP_USER ||
-    process.env.EMAIL_USER ||
-    process.env.GMAIL_USER ||
-    'hemasrichowdarykilaru@gmail.com';
-
-  const fromAddress =
-    process.env.EMAIL_FROM ||
-    `"EvidenceLoop Security" <${authUser}>`;
+  const { fromAddress } = getMailConfig();
 
   const mailOptions = {
     from: fromAddress,
@@ -133,29 +135,29 @@ export async function dispatchOtpToAccount(email, otp, name) {
   try {
     const info = await transporter.sendMail(mailOptions);
     console.log(`[Real-Time MFA] Verification email successfully sent to ${email} (Message ID: ${info.messageId})`);
+    return info;
   } catch (err) {
-    console.warn(`[Real-Time MFA Notice] Live SMTP delivery could not reach recipient (${email}): ${err.message}. Instant OTP preview active for workflow.`);
+    console.error(`[Real-Time MFA Error] Live SMTP delivery failed for recipient (${email}): ${err.message}`);
+    throw new Error(`Verification email delivery failed: ${err.message}`);
   }
 }
 
 /**
  * Dispatch Password Reset Code to account
+ * Fixes undefined authUser bug via shared getMailConfig()
+ * Propagates errors on delivery failure.
  */
 export async function dispatchPasswordResetToAccount(email, otp, name) {
-  const isProd = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
   const timestamp = new Date().toISOString();
-
   console.log(`[PASSWORD RESET DISPATCH] [${timestamp}] Recipient: ${email} (${name || 'User'}) - Validity: 10 mins`);
 
   const transporter = getMailTransporter();
   if (!transporter) {
-    console.warn(`[Password Reset Notice] No SMTP credentials configured. Proceeding with instant code preview.`);
-    return;
+    console.error(`[Password Reset Error] SMTP mail transporter is not configured.`);
+    throw new Error('Email delivery service is currently unavailable. Password reset code could not be sent.');
   }
 
-  const fromAddress =
-    process.env.EMAIL_FROM ||
-    `"EvidenceLoop Security" <${authUser}>`;
+  const { fromAddress } = getMailConfig();
 
   const mailOptions = {
     from: fromAddress,
@@ -189,13 +191,16 @@ export async function dispatchPasswordResetToAccount(email, otp, name) {
   try {
     const info = await transporter.sendMail(mailOptions);
     console.log(`[Password Reset] Email successfully sent to ${email} (Message ID: ${info.messageId})`);
+    return info;
   } catch (err) {
-    console.warn(`[Password Reset Notice] Live SMTP delivery could not reach ${email}: ${err.message}. Instant OTP preview active for workflow.`);
+    console.error(`[Password Reset Error] Live SMTP delivery failed for recipient (${email}): ${err.message}`);
+    throw new Error(`Password reset email delivery failed: ${err.message}`);
   }
 }
 
 /**
- * Generate a 6-digit cryptographic OTP and create an MFA session in persistent shared storage
+ * Generate a 6-digit cryptographic OTP and create an MFA session in persistent shared storage.
+ * Safe delivery: Email is dispatched FIRST. If delivery fails, error propagates and no session is created.
  */
 export async function createOtpSession(user) {
   const otp = crypto.randomInt(100000, 999999).toString();
@@ -203,7 +208,7 @@ export async function createOtpSession(user) {
   const otpHash = hashOtp(otp);
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes validity
 
-  // Await real-time delivery before completing session creation
+  // Await delivery before saving session. If dispatch fails, function throws and no session is created.
   await dispatchOtpToAccount(user.email, otp, user.name);
 
   if (isDbConnected()) {
@@ -222,6 +227,9 @@ export async function createOtpSession(user) {
       expiresAt,
     });
   } else {
+    if (isProduction()) {
+      throw new Error('Database connection unavailable. MongoDB Atlas is mandatory in production.');
+    }
     fallbackOtpSessions.set(otpSessionToken, {
       userId: String(user._id || user.id),
       email: user.email.toLowerCase(),
@@ -296,7 +304,11 @@ export async function verifyOtp(otpSessionToken, submittedOtp) {
     };
   }
 
-  // Fallback in-memory verification
+  if (isProduction()) {
+    return { valid: false, message: 'Database connection unavailable. MongoDB Atlas is mandatory in production.' };
+  }
+
+  // Fallback in-memory verification (strictly local dev)
   const session = fallbackOtpSessions.get(otpSessionToken);
   if (!session || session.purpose !== 'mfa') {
     return { valid: false, message: 'Invalid or expired MFA session. Please request a new code.' };
@@ -340,6 +352,7 @@ export async function verifyOtp(otpSessionToken, submittedOtp) {
 
 /**
  * Resend OTP for an existing session
+ * Safe delivery: Email is dispatched FIRST before updating session timestamp.
  */
 export async function resendOtp(otpSessionToken) {
   const newOtp = crypto.randomInt(100000, 999999).toString();
@@ -352,6 +365,7 @@ export async function resendOtp(otpSessionToken) {
       return { success: false, message: 'Session expired or invalid. Please log in again.' };
     }
 
+    // Await delivery first
     await dispatchOtpToAccount(session.email, newOtp, session.name);
 
     session.otpHash = newHash;
@@ -363,6 +377,10 @@ export async function resendOtp(otpSessionToken) {
       success: true,
       message: `A new real-time verification code has been dispatched to ${session.email}`,
     };
+  }
+
+  if (isProduction()) {
+    throw new Error('Database connection unavailable. MongoDB Atlas is mandatory in production.');
   }
 
   const session = fallbackOtpSessions.get(otpSessionToken);
@@ -384,6 +402,7 @@ export async function resendOtp(otpSessionToken) {
 
 /**
  * Create Password Reset Session
+ * Safe delivery: Email is dispatched FIRST before creating session in DB.
  */
 export async function createPasswordResetSession(user) {
   const otp = crypto.randomInt(100000, 999999).toString();
@@ -391,7 +410,7 @@ export async function createPasswordResetSession(user) {
   const otpHash = hashOtp(otp);
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-  // Await delivery before saving session
+  // Await delivery before saving session. If dispatch fails, function throws and no session is created.
   await dispatchPasswordResetToAccount(user.email, otp, user.name);
 
   if (isDbConnected()) {
@@ -407,6 +426,9 @@ export async function createPasswordResetSession(user) {
       expiresAt,
     });
   } else {
+    if (isProduction()) {
+      throw new Error('Database connection unavailable. MongoDB Atlas is mandatory in production.');
+    }
     fallbackOtpSessions.set(resetSessionToken, {
       userId: String(user._id || user.id),
       email: user.email.toLowerCase(),
@@ -463,6 +485,10 @@ export async function verifyPasswordResetOtp(resetSessionToken, submittedOtp) {
     return { valid: true, email };
   }
 
+  if (isProduction()) {
+    return { valid: false, message: 'Database connection unavailable. MongoDB Atlas is mandatory in production.' };
+  }
+
   const session = fallbackOtpSessions.get(resetSessionToken);
   if (!session || session.purpose !== 'password_reset') {
     return { valid: false, message: 'Invalid or expired password reset session. Please request a new code.' };
@@ -497,4 +523,5 @@ export default {
   createPasswordResetSession,
   verifyPasswordResetOtp,
   getMailTransporter,
+  getMailConfig,
 };

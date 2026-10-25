@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { findUserById } from '../config/userStore.js';
+import { findUserById, findUserByEmail } from '../config/userStore.js';
 import { getJwtSecret } from '../config/jwt.js';
 
 /**
@@ -42,8 +42,11 @@ export async function requireAuth(req, res, next) {
       });
     }
 
-    // Check that user still exists in active registry
-    const user = await findUserById(decoded.id);
+    // Check that user still exists in active registry (lookup by ID, fallback to email)
+    let user = await findUserById(decoded.id);
+    if (!user && decoded.email) {
+      user = await findUserByEmail(decoded.email);
+    }
     if (!user) {
       return res.status(401).json({
         success: false,

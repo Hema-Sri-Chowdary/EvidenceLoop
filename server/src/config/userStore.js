@@ -2,8 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 import User from '../models/User.js';
-import { isDbConnected, DATA_DIR } from './db.js';
+import { isDbConnected, isProduction, DATA_DIR } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,6 +61,7 @@ export const DEFAULT_USERS = [];
 let fallbackUsers = [];
 
 function loadUsersFile() {
+  if (isProduction()) return null;
   try {
     if (!fs.existsSync(USERS_FILE)) {
       return null;
@@ -74,6 +76,7 @@ function loadUsersFile() {
 }
 
 function saveUsersFile(users) {
+  if (isProduction()) return false;
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -89,6 +92,7 @@ function saveUsersFile(users) {
 let isStoreInitialized = false;
 
 export async function initUserStore() {
+  if (isProduction()) return;
   if (isStoreInitialized) return;
   isStoreInitialized = true;
 
@@ -140,6 +144,10 @@ export async function findUserByEmail(email) {
     return user;
   }
 
+  if (isProduction()) {
+    throw new Error('Database connection unavailable. MongoDB Atlas is mandatory in production.');
+  }
+
   if (fallbackUsers.length === 0) {
     await initUserStore();
   }
@@ -161,15 +169,28 @@ export async function findUserByEmail(email) {
 
 export async function findUserById(id) {
   if (isDbConnected()) {
-    const user = await User.findById(id).select('-password');
+    let user = null;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      user = await User.findById(id).select('-password');
+    }
+    if (!user) {
+      user = await User.findOne({ _id: id }).select('-password').catch(() => null);
+    }
     if (user) {
       const properRole = determineRoleByEmail(user.email);
       if (user.role !== properRole) {
         user.role = properRole;
         await user.save();
       }
+      return user;
     }
-    return user;
+    if (isProduction()) {
+      return null;
+    }
+  }
+
+  if (isProduction()) {
+    return null;
   }
 
   if (fallbackUsers.length === 0) {
@@ -215,6 +236,10 @@ export async function createUser({ name, email, password, org }) {
     };
   }
 
+  if (isProduction()) {
+    throw new Error('Database connection unavailable. MongoDB Atlas is mandatory in production.');
+  }
+
   if (fallbackUsers.length === 0) {
     await initUserStore();
   }
@@ -243,7 +268,9 @@ export async function createUser({ name, email, password, org }) {
 
 export async function updateUserProfile(id, { name, org }) {
   if (isDbConnected()) {
-    const user = await User.findById(id);
+    const user = mongoose.Types.ObjectId.isValid(id)
+      ? await User.findById(id)
+      : await User.findOne({ _id: id }).catch(() => null);
     if (!user) return null;
     if (name && name.trim()) user.name = name.trim();
     if (org !== undefined) {
@@ -259,6 +286,10 @@ export async function updateUserProfile(id, { name, org }) {
       role: user.role,
       org: user.org,
     };
+  }
+
+  if (isProduction()) {
+    throw new Error('Database connection unavailable. MongoDB Atlas is mandatory in production.');
   }
 
   if (fallbackUsers.length === 0) {
@@ -288,8 +319,14 @@ export async function updateUserProfile(id, { name, org }) {
 
 export async function deleteUserById(id) {
   if (isDbConnected()) {
-    const result = await User.findByIdAndDelete(id);
+    const result = mongoose.Types.ObjectId.isValid(id)
+      ? await User.findByIdAndDelete(id)
+      : await User.findOneAndDelete({ _id: id }).catch(() => null);
     return !!result;
+  }
+
+  if (isProduction()) {
+    throw new Error('Database connection unavailable. MongoDB Atlas is mandatory in production.');
   }
 
   if (fallbackUsers.length === 0) {
@@ -313,6 +350,10 @@ export async function updateUserPassword(email, newHashedPassword) {
     user.password = newHashedPassword;
     await user.save();
     return true;
+  }
+
+  if (isProduction()) {
+    throw new Error('Database connection unavailable. MongoDB Atlas is mandatory in production.');
   }
 
   if (fallbackUsers.length === 0) {

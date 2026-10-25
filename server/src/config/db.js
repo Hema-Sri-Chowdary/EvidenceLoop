@@ -7,6 +7,10 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+export function isProduction() {
+  return process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
+}
+
 // In serverless environments (Vercel, AWS Lambda), /var/task is read-only; use os.tmpdir() (/tmp)
 const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT);
 export const DATA_DIR = isServerless
@@ -18,7 +22,6 @@ const ATLAS_PRODUCTION_URI =
   'mongodb+srv://hemasrichowdarykilaru_db_user:yuw40UOtNzFmaptG@cluster0.sj3hpus.mongodb.net/evidenceloop?retryWrites=true&w=majority';
 
 let cachedPromise = null;
-
 let lastFailTime = 0;
 
 export async function connectDB() {
@@ -26,9 +29,11 @@ export async function connectDB() {
     return mongoose.connection;
   }
 
-  // Backoff: If connection failed less than 30s ago, do not block or retry immediately
-  if (Date.now() - lastFailTime < 30000) {
-    return null;
+  // Short backoff (3s) to prevent spamming failed DNS during active errors
+  if (Date.now() - lastFailTime < 3000) {
+    if (isProduction()) {
+      return null;
+    }
   }
 
   if (cachedPromise) {
@@ -46,19 +51,24 @@ export async function connectDB() {
 
   try {
     cachedPromise = mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 2000,
-      connectTimeoutMS: 2000,
-      socketTimeoutMS: 8000,
+      serverSelectionTimeoutMS: 8000,
+      connectTimeoutMS: 8000,
+      socketTimeoutMS: 20000,
       bufferCommands: false,
+      maxPoolSize: 10,
     });
     const conn = await cachedPromise;
-    console.log(`[Database] MongoDB Connected: ${conn.connection.host}`);
+    console.log(`[Database] MongoDB Atlas Connected: ${conn.connection.host}`);
     return conn;
   } catch (error) {
     cachedPromise = null;
     lastFailTime = Date.now();
-    console.warn(`[Database Warning] Could not connect to MongoDB: ${error.message}`);
-    console.warn(`[Database Notice] Operating in resilient memory/file fallback mode.`);
+    console.error(`[Database Error] Could not connect to MongoDB Atlas: ${error.message}`);
+    if (isProduction()) {
+      console.error(`[Database Notice] MongoDB Atlas is mandatory in production. Local/memory fallbacks are prohibited.`);
+      return null;
+    }
+    console.warn(`[Database Notice] Operating in local development file fallback mode.`);
     return null;
   }
 }
@@ -68,14 +78,19 @@ export function isDbConnected() {
 }
 
 export function getStorageEngine() {
-  return isDbConnected() ? 'mongodb' : 'file';
+  if (isDbConnected()) return 'mongodb';
+  if (isProduction()) return 'unavailable';
+  return 'file';
 }
 
 /**
  * Load fallback records from disk.
- * Returns null if file doesn't exist or is invalid.
+ * Strictly prohibited in production.
  */
 export function loadFallbackData() {
+  if (isProduction()) {
+    throw new Error('Local file/memory fallback storage is disabled in production. MongoDB Atlas is mandatory.');
+  }
   try {
     if (!fs.existsSync(DATA_FILE)) {
       return null;
@@ -91,8 +106,12 @@ export function loadFallbackData() {
 
 /**
  * Persist fallback records to disk.
+ * Strictly prohibited in production.
  */
 export function saveFallbackData(records) {
+  if (isProduction()) {
+    throw new Error('Local file/memory fallback storage is disabled in production. MongoDB Atlas is mandatory.');
+  }
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });

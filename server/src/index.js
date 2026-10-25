@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { connectDB, isDbConnected } from './config/db.js';
+import { connectDB, isDbConnected, isProduction } from './config/db.js';
 import obligationRoutes from './routes/obligationRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import authRoutes from './routes/authRoutes.js';
@@ -78,32 +78,54 @@ app.use(
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// Health Check Endpoint (instant response)
+// Health Check Endpoint
 app.get('/api/health', (req, res) => {
-  if (!isDbConnected()) {
-    connectDB().catch(() => {});
-  }
   const connected = isDbConnected();
-  res.json({
-    status: 'ok',
+  const prod = isProduction();
+  const statusOk = connected || !prod;
+  res.status(statusOk ? 200 : 503).json({
+    status: connected ? 'ok' : prod ? 'service_unavailable' : 'degraded',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     database: {
-      connected: true,
-      engine: connected ? 'MongoDB Atlas / Mongoose' : 'Active Compliance Engine',
-      storage: connected ? 'mongodb' : 'in-memory',
+      connected,
+      engine: connected ? 'MongoDB Atlas / Mongoose' : prod ? 'None (Atlas Required)' : 'Local File Fallback',
+      storage: connected ? 'mongodb' : prod ? 'unavailable' : 'file',
+      mandatoryInProduction: true,
     },
     service: 'EvidenceLoop Audit Readiness API',
     version: '1.0.0',
   });
 });
 
-// Non-blocking database connection middleware for API requests
-app.use((req, res, next) => {
-  if (!isDbConnected()) {
-    connectDB().catch(() => {});
+// Database connection middleware: ensures MongoDB Atlas is connected before handling requests
+app.use(async (req, res, next) => {
+  if (req.path === '/api/health') {
+    return next();
   }
-  next();
+
+  try {
+    if (!isDbConnected()) {
+      await connectDB();
+    }
+
+    if (isProduction() && !isDbConnected()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection unavailable. MongoDB Atlas is mandatory in production.',
+      });
+    }
+
+    next();
+  } catch (err) {
+    if (isProduction()) {
+      return res.status(503).json({
+        success: false,
+        message: `Database connection unavailable: ${err.message}. MongoDB Atlas is mandatory in production.`,
+      });
+    }
+    next();
+  }
 });
 
 // API Routes
@@ -118,9 +140,17 @@ app.use(errorHandler);
 // Connect to MongoDB & Start Server
 async function startServer() {
   try {
-    await connectDB();
+    const conn = await connectDB();
+    if (isProduction() && !conn) {
+      console.error('[FATAL] MongoDB Atlas connection failed in production. Server startup aborted.');
+      process.exit(1);
+    }
     await seedMongoUsersIfEmpty();
   } catch (err) {
+    if (isProduction()) {
+      console.error('[FATAL] MongoDB Atlas startup error in production:', err.message);
+      process.exit(1);
+    }
     console.warn('[Startup DB Notice]', err.message);
   }
 

@@ -264,7 +264,10 @@ export async function register(req, res, next) {
  */
 export async function getMe(req, res, next) {
   try {
-    const user = await findUserById(req.user.id);
+    let user = await findUserById(req.user.id);
+    if (!user && req.user.email) {
+      user = await findUserByEmail(req.user.email);
+    }
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
