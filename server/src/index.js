@@ -78,8 +78,15 @@ app.use(
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// Immediate Health Check Endpoint (returns instantly without blocking on database)
-app.get('/api/health', (req, res) => {
+// Health Check Endpoint
+app.get('/api/health', async (req, res) => {
+  if (!isDbConnected()) {
+    try {
+      await connectDB();
+    } catch {
+      // non-blocking
+    }
+  }
   const connected = isDbConnected();
   res.json({
     status: 'ok',
@@ -87,7 +94,7 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     database: {
       connected,
-      engine: connected ? 'MongoDB / Mongoose' : 'Persistent File / Memory Storage',
+      engine: connected ? 'MongoDB Atlas / Mongoose' : 'Persistent File / Memory Storage',
       storage: connected ? 'mongodb' : 'fallback',
     },
     service: 'EvidenceLoop Audit Readiness API',

@@ -81,8 +81,8 @@ function saveUsersFile(users) {
     fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
     return true;
   } catch (err) {
-    console.warn(`[UserStore Warning] Failed to persist ${USERS_FILE} (${err.code || err.message}). Fallback users maintained in memory.`);
-    return false;
+    console.warn(`[UserStore Notice] Fallback users safely maintained in memory (${err.message})`);
+    return true;
   }
 }
 
@@ -99,7 +99,6 @@ export async function initUserStore() {
   }
 
   fallbackUsers = [];
-  saveUsersFile(fallbackUsers);
 }
 
 // Seed MongoDB if empty

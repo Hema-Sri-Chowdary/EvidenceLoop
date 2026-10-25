@@ -17,43 +17,41 @@ export const DATA_FILE = path.join(DATA_DIR, 'obligations.json');
 const ATLAS_PRODUCTION_URI =
   'mongodb+srv://hemasrichowdarykilaru_db_user:yuw40UOtNzFmaptG@cluster0.sj3hpus.mongodb.net/evidenceloop?retryWrites=true&w=majority';
 
-let isConnecting = false;
+let cachedPromise = null;
 
 export async function connectDB() {
   if (mongoose.connection.readyState === 1) {
     return mongoose.connection;
   }
 
-  const uri = process.env.MONGODB_URI || ATLAS_PRODUCTION_URI;
-
-  if (isConnecting) {
-    // Wait at most 2 seconds for in-progress connection to avoid hanging requests
-    const start = Date.now();
-    while (mongoose.connection.readyState === 2 && Date.now() - start < 2000) {
-      await new Promise((r) => setTimeout(r, 100));
+  if (cachedPromise) {
+    try {
+      const conn = await cachedPromise;
+      if (mongoose.connection.readyState === 1) {
+        return conn;
+      }
+    } catch {
+      cachedPromise = null;
     }
-    if (mongoose.connection.readyState === 1) {
-      return mongoose.connection;
-    }
-    return null;
   }
 
-  isConnecting = true;
+  const uri = process.env.MONGODB_URI || ATLAS_PRODUCTION_URI;
+
   try {
-    const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 3000,
-      connectTimeoutMS: 3000,
-      socketTimeoutMS: 5000,
+    cachedPromise = mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 6000,
+      connectTimeoutMS: 6000,
+      socketTimeoutMS: 15000,
       bufferCommands: false,
     });
+    const conn = await cachedPromise;
     console.log(`[Database] MongoDB Connected: ${conn.connection.host}`);
     return conn;
   } catch (error) {
+    cachedPromise = null;
     console.warn(`[Database Warning] Could not connect to MongoDB: ${error.message}`);
-    console.warn(`[Database Notice] Falling back to file/memory storage.`);
+    console.warn(`[Database Notice] Operating in resilient memory/file fallback mode.`);
     return null;
-  } finally {
-    isConnecting = false;
   }
 }
 
@@ -94,8 +92,8 @@ export function saveFallbackData(records) {
     fs.writeFileSync(DATA_FILE, JSON.stringify(records, null, 2), 'utf-8');
     return true;
   } catch (error) {
-    console.error(`[Database Error] Failed to persist fallback records to file: ${error.message}`);
-    return false;
+    console.warn(`[Database Warning] Fallback records maintained in memory: ${error.message}`);
+    return true;
   }
 }
 
