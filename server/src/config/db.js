@@ -9,11 +9,20 @@ export const DATA_DIR = path.resolve(__dirname, '../../data');
 export const DATA_FILE = path.join(DATA_DIR, 'obligations.json');
 
 export async function connectDB() {
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
+  if (mongoose.connection.readyState === 2) {
+    await new Promise((resolve) => mongoose.connection.once('connected', resolve));
+    return mongoose.connection;
+  }
+
   const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/evidenceloop';
   
   try {
     const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 2500,
+      serverSelectionTimeoutMS: 4000,
+      bufferCommands: false, // In serverless, fail fast if disconnected rather than hanging
     });
     console.log(`[Database] MongoDB Connected: ${conn.connection.host}`);
     return conn;

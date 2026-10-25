@@ -78,6 +78,18 @@ app.use(
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
+// Ensure database connection is established on serverless cold starts
+app.use(async (req, res, next) => {
+  if (!isDbConnected() && process.env.MONGODB_URI) {
+    try {
+      await connectDB();
+    } catch (err) {
+      console.warn('[Serverless DB Middleware Notice]', err.message);
+    }
+  }
+  next();
+});
+
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {
   const connected = isDbConnected();
