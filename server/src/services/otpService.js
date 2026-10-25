@@ -25,8 +25,16 @@ export function getMailTransporter() {
 
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
-  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER || process.env.GMAIL_USER;
-  const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS || process.env.GMAIL_APP_PASSWORD;
+  const smtpUser =
+    process.env.SMTP_USER ||
+    process.env.EMAIL_USER ||
+    process.env.GMAIL_USER ||
+    'hemasrichowdarykilaru@gmail.com';
+  const smtpPass =
+    process.env.SMTP_PASS ||
+    process.env.EMAIL_PASS ||
+    process.env.GMAIL_APP_PASSWORD ||
+    'hqon tiuu iesx ylgp';
 
   if (smtpUser && smtpPass) {
     if (smtpHost) {

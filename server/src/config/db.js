@@ -14,6 +14,9 @@ export const DATA_DIR = isServerless
   : path.resolve(__dirname, '../../data');
 export const DATA_FILE = path.join(DATA_DIR, 'obligations.json');
 
+const ATLAS_PRODUCTION_URI =
+  'mongodb+srv://hemasrichowdarykilaru_db_user:yuw40UOtNzFmaptG@cluster0.sj3hpus.mongodb.net/evidenceloop?retryWrites=true&w=majority';
+
 let isConnecting = false;
 
 export async function connectDB() {
@@ -21,11 +24,7 @@ export async function connectDB() {
     return mongoose.connection;
   }
 
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    console.warn('[Database Notice] No MONGODB_URI configured. Operating with file/memory storage.');
-    return null;
-  }
+  const uri = process.env.MONGODB_URI || ATLAS_PRODUCTION_URI;
 
   if (isConnecting) {
     // Wait at most 2 seconds for in-progress connection to avoid hanging requests
