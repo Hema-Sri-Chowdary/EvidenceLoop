@@ -239,7 +239,6 @@ export async function createOtpSession(user) {
   return {
     otpSessionToken,
     expiresInSeconds: 600,
-    previewOtp: otp,
   };
 }
 
@@ -363,7 +362,6 @@ export async function resendOtp(otpSessionToken) {
     return {
       success: true,
       message: `A new real-time verification code has been dispatched to ${session.email}`,
-      previewOtp: newOtp,
     };
   }
 
@@ -381,7 +379,6 @@ export async function resendOtp(otpSessionToken) {
   return {
     success: true,
     message: `A new real-time verification code has been dispatched to ${session.email}`,
-    previewOtp: newOtp,
   };
 }
 
@@ -425,7 +422,6 @@ export async function createPasswordResetSession(user) {
   return {
     resetSessionToken,
     expiresInSeconds: 600,
-    previewOtp: otp,
   };
 }
 

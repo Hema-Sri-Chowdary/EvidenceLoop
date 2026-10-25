@@ -88,7 +88,7 @@ export async function login(req, res, next) {
       });
     }
 
-    const { otpSessionToken, expiresInSeconds, previewOtp } = otpData;
+    const { otpSessionToken, expiresInSeconds } = otpData;
 
     return res.json({
       success: true,
@@ -96,7 +96,6 @@ export async function login(req, res, next) {
       message: `A 6-digit real-time verification code has been dispatched to ${user.email}`,
       otpSessionToken,
       expiresInSeconds,
-      previewOtp,
       user: {
         id: String(user._id || user.id),
         email: user.email,
@@ -184,7 +183,6 @@ export async function resendOtp(req, res, next) {
     return res.json({
       success: true,
       message: result.message,
-      previewOtp: result.previewOtp,
     });
   } catch (error) {
     next(error);
@@ -240,7 +238,7 @@ export async function register(req, res, next) {
       });
     }
 
-    const { otpSessionToken, expiresInSeconds, previewOtp } = otpData;
+    const { otpSessionToken, expiresInSeconds } = otpData;
 
     return res.status(201).json({
       success: true,
@@ -248,7 +246,6 @@ export async function register(req, res, next) {
       message: `Account created with role '${user.role}'. A 6-digit verification code has been dispatched to ${user.email}`,
       otpSessionToken,
       expiresInSeconds,
-      previewOtp,
       user: {
         id: String(user._id || user.id),
         email: user.email,
@@ -391,14 +388,13 @@ export async function forgotPassword(req, res, next) {
       });
     }
 
-    const { resetSessionToken, expiresInSeconds, previewOtp } = resetData;
+    const { resetSessionToken, expiresInSeconds } = resetData;
 
     return res.json({
       success: true,
       message: 'If an account is associated with this email, a verification code has been dispatched.',
       resetSessionToken,
       expiresInSeconds,
-      previewOtp,
       email: user.email,
     });
   } catch (error) {

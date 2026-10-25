@@ -14,7 +14,6 @@ export function MfaPage() {
   const stateSession = location.state || {};
   const [otpSessionToken, setOtpSessionToken] = useState(stateSession.otpSessionToken || '');
   const [email, setEmail] = useState(stateSession.email || '');
-  const [previewOtp, setPreviewOtp] = useState(stateSession.previewOtp || '');
   const [expiresInSeconds, setExpiresInSeconds] = useState(stateSession.expiresInSeconds || 600);
   const [otpInput, setOtpInput] = useState('');
   const [countdown, setCountdown] = useState(expiresInSeconds);
@@ -75,10 +74,7 @@ export function MfaPage() {
     if (isResending) return;
     setIsResending(true);
     try {
-      const res = await resendOtp(otpSessionToken);
-      if (res.previewOtp) {
-        setPreviewOtp(res.previewOtp);
-      }
+      await resendOtp(otpSessionToken);
       setCountdown(600);
       setOtpInput('');
       toast.info('A new verification code has been dispatched to your email.');
@@ -143,59 +139,17 @@ export function MfaPage() {
           </p>
         </div>
 
-        {/* Live Test Helper Preview Banner if available */}
-        {previewOtp && (
-          <div
-            style={{
-              marginBottom: 20,
-              padding: '12px 16px',
-              borderRadius: 'var(--radius-lg)',
-              backgroundColor: '#F0FDF4',
-              border: '1.5px solid #BBF7D0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12,
-            }}
-          >
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                Real-Time Security Code
-              </div>
-              <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'monospace', color: '#15803D', letterSpacing: 3 }}>
-                {previewOtp}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setOtpInput(previewOtp)}
-              className="btn btn-secondary btn-sm"
-              style={{
-                borderRadius: 'var(--radius-pill)',
-                fontSize: 12,
-                padding: '6px 14px',
-                fontWeight: 700,
-                color: '#0F766E',
-                border: '1px solid #A7F3D0',
-                backgroundColor: '#FFFFFF',
-              }}
-            >
-              Auto-fill Code
-            </button>
-          </div>
-        )}
-
         {/* Verification Form */}
         <form onSubmit={handleVerify}>
-          <div style={{ textAlign: 'center', marginBottom: 8 }}>
+          <div style={{ textAlign: 'center', marginBottom: 12 }}>
             <label
               className="form-label"
               style={{
-                fontSize: 10.5,
+                fontSize: 12,
                 fontWeight: 700,
                 color: '#1E293B',
                 display: 'block',
-                marginBottom: 4,
+                marginBottom: 8,
               }}
             >
               Enter OTP

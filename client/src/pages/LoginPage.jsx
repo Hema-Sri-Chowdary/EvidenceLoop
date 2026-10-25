@@ -50,7 +50,6 @@ export function LoginPage() {
         navigate('/mfa', {
           state: {
             otpSessionToken: res.otpSessionToken,
-            previewOtp: res.previewOtp,
             email: res.user?.email || formData.email,
             name: res.user?.name || formData.name,
             expiresInSeconds: res.expiresInSeconds || 600,
@@ -63,7 +62,6 @@ export function LoginPage() {
         navigate('/mfa', {
           state: {
             otpSessionToken: res.otpSessionToken,
-            previewOtp: res.previewOtp,
             email: res.user?.email || formData.email,
             name: res.user?.name || '',
             expiresInSeconds: res.expiresInSeconds || 600,

@@ -208,13 +208,14 @@ export function OtpCirclesInput({
           justifyContent: 'center',
           gap: 6,
           marginTop: 10,
-          fontSize: 10,
+          minHeight: 18,
+          fontSize: 11,
           fontWeight: 600,
           color: isComplete ? '#059669' : '#64748B',
         }}
       >
         {isComplete ? (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
             <span
               style={{
                 display: 'inline-block',
@@ -224,13 +225,11 @@ export function OtpCirclesInput({
                 backgroundColor: '#10B981',
               }}
             />
-            {length}-digit security code complete
+            Code complete
           </span>
-        ) : (
-          <span>
-            {filledCount > 0 ? `${filledCount} of ${length} digits entered` : 'Enter OTP'}
-          </span>
-        )}
+        ) : filledCount > 0 ? (
+          <span>{`${filledCount} of ${length} digits entered`}</span>
+        ) : null}
       </div>
     </div>
   );

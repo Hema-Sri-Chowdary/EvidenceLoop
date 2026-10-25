@@ -12,7 +12,6 @@ export function ForgotPasswordPage() {
   const [step, setStep] = useState(1); // 1 = Request Code, 2 = Verify Code & Set New Password
   const [email, setEmail] = useState('');
   const [resetSessionToken, setResetSessionToken] = useState('');
-  const [previewOtp, setPreviewOtp] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -29,7 +28,6 @@ export function ForgotPasswordPage() {
       const res = await authService.forgotPassword(email);
       toast.success(res.message, 'Reset Code Dispatched');
       setResetSessionToken(res.resetSessionToken);
-      setPreviewOtp(res.previewOtp || '');
       setStep(2);
     } catch (err) {
       toast.error(err.userMessage || err.message || 'No account found with this email.');
@@ -244,48 +242,6 @@ export function ForgotPasswordPage() {
                 <strong style={{ color: '#0F172A', fontWeight: 700 }}>{email}</strong>
               </p>
             </div>
-
-            {/* Test Helper Preview Banner */}
-            {previewOtp && (
-              <div
-                style={{
-                  marginBottom: 20,
-                  padding: '12px 16px',
-                  borderRadius: 'var(--radius-lg)',
-                  backgroundColor: '#F0FDF4',
-                  border: '1.5px solid #BBF7D0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: '#166534', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Reset Code
-                  </div>
-                  <div style={{ fontSize: 17, fontWeight: 800, fontFamily: 'monospace', color: '#15803D', letterSpacing: 3 }}>
-                    {previewOtp}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setOtp(previewOtp)}
-                  className="btn btn-secondary btn-sm"
-                  style={{
-                    borderRadius: 'var(--radius-pill)',
-                    fontSize: 10,
-                    padding: '6px 14px',
-                    fontWeight: 700,
-                    color: '#0F766E',
-                    border: '1px solid #A7F3D0',
-                    backgroundColor: '#FFFFFF',
-                  }}
-                >
-                  Auto-fill
-                </button>
-              </div>
-            )}
 
             <form onSubmit={handleConfirmReset}>
               <div style={{ textAlign: 'center', marginBottom: 6 }}>
